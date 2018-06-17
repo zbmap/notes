@@ -1,0 +1,3292 @@
+                C practice
+
+                summary
+
+[*] 学习一门编程语言最好从使用的角度学习，虽然一个语言定义的东西非常琐碎非常多，
+    但是从使用的角度看是另外一个视图，直接使用别人实践经验中总结出来的对语言的
+    使用方法才是最快的学习方法，而不是对着语言参考手册学习，那是做编译器的人的最佳
+    选择;
+
+[*] 软件设计主要是考验程序员对代码或者问题的控制能力,即怎么组织你的代码能够简单
+    而且能牢牢控制住它,即很容易读懂也很容易维护它,当感觉到很难读懂或者很难维护，说明
+    需要重构了;
+
+[*] c是面向机器的语言，像学习汇编一样学习c语言,写出每一条语句需要知道在机器上是
+    怎么表示的,怎么执行的，映射到汇编应该是什么;
+
+[*] c 编程模式 数据结构 + 算法 = 程序，和汇编和机器语言一样的编程模式；
+
+[*] 编程语言的接口包括静态接口和运行时接口, 所以实现所做的检查
+    （非应用逻辑相关检查，只是语言层面的检查）包括静态检查（翻译时检查）和
+    运行时检查，运行时检查是非常关键的检查，它能够检查出
+    语言非常多的错误，能帮助准确定位问题；例如 有符号整数的溢出问题，只能运行时
+    检查，静态没法检查;
+
+    c语言只有静态检查，没有运行时检查机制（靠程序员自己保证），所以所c是不安全
+    的；java既有静态检查又有运行时检查，所以说是安全的; c即使是静态检查也不是
+    非常严格的检查，很宽容；
+
+[*] “未定义行为”就是标准没有定义这种行为，代码中禁止使用这种行为，
+    比如有符号整数溢出；
+
+    未指定行为的定义是： 标准指定了一个有限的可能的行为，但是具体是哪个行为标准
+    没要求，实现自己决定采用哪个行为，只要是是标准指定的范围值的行为就行；
+    代码中也拒绝依赖这几个选项中的某一个的行为；比如求值顺序；
+    c相信最好的求值顺序是机器决定的，所以标准不做约束；所以我们也不可以依赖；
+
+    实现定义的行为是指C标准并未指定、由各个编译器自己选择并在文档中说明的行为。
+    例如signed 整数右移运算高位填充0 还是填充1，
+    它和未指定行为（unspecified behavior）的主要差别是，实现定义的行为必须在
+    应用文档说明。实现定义的行为也是没有移植性的，能不依赖就不要依赖，如果必须
+    用，最好用间接的方式使用，保证在项目内是可以移植的；
+
+[*] 学习一们语言需要掌握name, object, bind; name就是一个对象的名字，
+    其次一个bind是可以动态变化的，有初始化，中间动态变化等；比如java的引用赋值；
+
+    程序设计的本质就是通过不同名字空间的去引用不同的对象，然后操作这些对象；
+
+[*] Use TODO comments for code that is temporary, a short-term solution, or
+    good-enough but not perfect.
+    TODOs should include the string TODO in all caps, followed by your username
+    in parentheses. A colon is optional. It's preferable to put a bug/ticket
+    number next to the TODO item as well.
+
+    Examples:
+    // TODO(mrmonkey): Handle the unlikely edge cases (bug ####)
+
+
+                        词法
+
+[*] c词法分析中(token分析)的贪心法，即从左到右读入一个字符，如果该字符可能和后面
+    的字符构成合法的符号，那么再读入下一个字符，检查已经读入的两个字符组成的
+    字符串是否可能和下一个字符构成合法的字符，如果可能则继续读入，重复上述判断，
+    直到读入的字符组成的字符串已不再可能和下一个字符组成一个有意义的token,则
+    当前的这个字符串就是一个token；
+
+[*] ‘a’和a以及"abc"一样都是token，只不过bind的东西不一样, "abc" bind 是一个
+    数组；
+
+[*] 对象都有数值，而且有类型，是因为很多应用上下文都需要考虑对象类型这个属性;
+
+[*] C中字符编码未定义，即字符对应的整数值没有定义，字符在内存中存放的就是它对应
+    的整数，所以，字符这个名称bind的就是一个整数，只不过它和整数的对应关系，
+    即编码没有定义；
+
+[*] C中 ‘a’ bind的对象是int类型，非char类型，c++中是char类型；注意char也是一种
+    整数类型，只不过编码未定义而已；
+
+[*] C中注释编译器处理方式是用一个空格替换，所以下面两个语句作用是一样的
+    #define   LINE_NUMBER  (2)
+    #define   LINE_NUMBER  /* line number
+                             It can not = 0 */ （2*5）
+
+[*] C中注释 (/**/    //)不能嵌套,大块的注释用 #if 0 #endif /* 从左向右扫描匹配
+    第一个遇到的*/；
+
+[*] C中所有运算符是单个token，包括符合运算符，不能用空白隔开，比如+=等等
+
+[*] 编程字体要用等宽字体；
+
+[*] 禁止使用8进制整数常量，即0开头的整数；
+
+[*] 禁止修改字符串常量；
+
+[*] C 语言的特点之一是“一词多用”，在不同的上下文中，C 语言的tocken 可能具有
+    不同的含义 token重载非常多，所以需要根据上下文才能确定这个token的含义；
+
+[*] 写代码时候，先把整个框架写好，然后在中间分层嵌入细节；
+    if () {}
+    do {} while ()
+    void f() {}等等
+
+    例如:
+    while ((c = getchar () != EOF) {
+        if (c == '\n') {
+            ++nl ;
+        }
+    }
+    上面代码少一个括号’)’，初学者无论是抄写书上的代码，还是写自己的代码，总是
+    一行一行地用从左到右的方式写代码。他们的代码往往是这样演化形成的：
+    while
+    while ((
+    while ((c = getchar ()
+    while ((c = getchar () != EOF)
+    这种方式完全是人类书写的自然方式，这样形成的代码漏掉一两个括号对任何人来说都
+    是在所难免的。很可惜的是，这种方式虽然是人类书写时的自然方式，却不是写代码的
+    良好方式。为了避免这种方式的弊端，高手们通常用另一种方式书写代码：
+    while
+    while () {}
+    while (()) {}
+    while (() != EOF) {}
+    while ((c = getchar()) != EOF) {}
+    也就是一旦需要写括号，首先把括号写全，然后再向其中补充内容。毫无疑问，
+    这种写代码的“工序”更为合理，因为它可以避免括号不成对的问题。不仅括号应该这样
+    写，其他一切成对的单词，如，{}、""、' '、[]、<>都应该按照这种方式书写。
+
+    if (i == j);
+        printf("%d==%d\n", i, j);
+    这段代码，其原来的本意是希望在i 与j 相等时执行“printf("%d==%d\n",i,j);”，
+    但由于错误地在“ if (i ==j ) ” 后面随手写了一个“;” ， 这使得后面的
+    “printf("%d==%d\n",i,j);”成了与if 语句相互独立的一条语句，因此，程序无论
+    在i和j 是否相等时都执行“printf("%d==%d\n",i,j);”这条语句一种良好的书写方式
+    是先把if 语句的总体框架写完：
+    if () {}
+    然后再逐步地向其中添加内容。这样，代码的下一步将演化为：
+    if (i == j) {}
+    现在这个if 语句已经成为了一个完整的语句，即使现在编译，它也没有任何语法方面
+    的问题。始终保持代码在形式上的正确性，这一点在编辑代码时非常重要。
+    最后把这个语句补全：
+    if (i == j) {
+        printf("%d==%d\n",i,j);
+    }
+    这种方式完成的代码就不会有样本中误写多余的“;”之虞。
+
+[*] 结构型的数组、多维的数组如果在定义时初始化，按照数组的矩阵结构分行书写。
+    int aiNumbers[4][3] =  {
+	    1, 1, 1,
+	    2, 4, 8,
+	    3, 9, 27,
+	    4, 16, 64
+    };
+    原理:因为要定义的数组是一个4元素的数组,每个数组元素也是一个数组,所以这样写
+    很容易看懂;
+
+It is very important that any programmer be able to look at another's code and
+quickly understand it. Maintaining a uniform style and following conventions
+means that we can more easily use "pattern-matching" to infer what various
+symbols are and what invariants are true about them. Creating common, required
+idioms and patterns makes code much easier to understand. In some cases there
+might be good arguments for changing certain style rules, but we nonetheless
+keep things as they are in order to preserve consistency.
+
+1. Coding style is all about readability and maintainability
+
+    code就是让别人很容易明白你要让机器干什么；
+
+2.  简洁、清晰
+    不要过分追求技巧，否则会降低程序的可读性，所见即所得，一眼就能看懂准确含义的
+    代码最好;
+
+3.  一致
+    一致性带来的将是更好的程序，如果程序中的格式很随意，例如对数组做循环，一会儿采用
+    下标变量从下到上的方式，一会儿又用从上到下的方式；对字符串一会儿用strcpy做复制，
+    一会儿又用for循环做复制等等，这些变化就会使人很难看清实际上到底是怎么回事，而
+    如果相同计算的每次出现总是采用同样方式，任何变化就预示着是经过了深思熟虑，
+    要求读程序的人注意。
+
+    编辑代码时，花点时间看看项目中的其他代码并确定其风格，如果其他代码if 语
+    句中使用空格，那么你也要使用。如果其中的注释用星号（*）围成一个盒子状，
+    你也这样做：
+    /**********************************
+    * Some comments are here.
+    * There may be many lines.
+    **********************************/
+
+    如果你工作在一个不是自己写的程序上，请注意保留程序原有的风格。当你需要做
+    修改时，不要使用你自己的风格，即使你特别喜欢它，程序的一致性比你本人的习惯
+    更重要，因为这将使随你之后的其他人生活得更容易些。
+
+
+    > >Heh. Actually, Linux maintainers have generally very consciously _avoided_
+    > >trying to "enforce" coding style issues.
+    >
+    > Really? "it's not going to be merged unless you turn all uint32_t into
+    > u_int32_t" is a paraphrased variant of what I was told this month.
+
+    I suspect different maintainers are hung up on different things, so yes,
+    certain things are more likely to carry red flags, and it also depends on
+    the patch.
+
+    For example, if I get a patch for something that is a whole driver, I
+    generally think that while I *prefer* to see it follow the kernel coding
+    style, I also expect that the person who sends me the driver is the one
+    who is going to maintain it in the future, and thus his personal coding
+    style preferences will override any but the strongest objections.
+
+    (So if somebody sends me a FSF-style "tabs are two characters, and
+    functions must be longer than 300 lines" mess, I generally would prefer to
+    not take it at all, but for some really obscure driver I might not care).
+
+    In contrast, if a patch modifies code that somebody else really will end
+    up touching in the future (maybe not "maintain", but maybe there is no
+    single and obvious maintainer), it had better match the code around it.
+
+    So to take your particular example: For me, "uint32_t" is certainly better
+    than "u_int32_t" (and there's seven times as many of the former as the
+    latter in the kernel), but for code _I_ would touch, I'd actually prefer
+    the Linux internal "__u32"/"u32", which have no question about what their
+    user-space visibility is (ie "__u32" is *always* ok in a header file that
+    is visible to user space).
+
+    But would I make it a huge issue? Not personally. So it will depend on the
+    maintainer.
+
+    (Personally, I think the "small functions, no deep levels of indentation,
+    and tabs are 8 characters wide" are the most important part by far. But I
+    do actually end up complaining about function naming etc too).
+
+4.  学习经验用法
+    和自然语言一样，程序设计语言也有许多惯用法，也就是那些经验丰富的程序员写
+    常见代码片段的经验方式，在学习一个语言的过程中，一个中心问题就是逐渐熟悉它的
+    经验用法，经验用法要么可以预防错误，要么能使错误更容易被发现，要么能使错误更容易
+    被纠正。
+
+
+        Indentation
+
+[*] I think goto's are fine, and they are often more readable than large
+    amounts of indentation;尽量少用缩进，缩进带来的后果就是代码不好理解；
+
+[*] Tabs are 8 characters, and thus indentations are also 8 characters.
+    Personally, I think the "small functions, no deep levels of indentation,
+    and tabs are 8 characters wide" are the most important part by far.
+
+[*] if you need more than 3 levels of indentation, you're screwed anyway,
+    and should fix your program.
+
+    and I think that's in many ways even more important than the 8-character
+    tab, because deep indentation is unreadable even if you *can* fit it on a
+    single line.(for_each macro is a example)
+
+    In the kernel, we try to split functions up, and perhaps use inline
+    functions etc, and really really avoid deep indentation.
+
+[*] The preferred way to ease multiple indentation levels in a switch statement
+    is to align the "switch" and its subordinate "case" labels in the same
+    column instead of "double-indenting" the "case" labels.  E.g.:
+
+    switch (suffix) {
+    case 'G':
+    case 'g':
+        mem <<= 30;
+        break;
+    case 'M':
+    case 'm':
+        mem <<= 20;
+        break;
+    case 'K':
+    case 'k':
+        mem <<= 10;
+        /* fall through */
+    default:
+        break;
+    }
+
+    > (Yes, I know, "we don't indent 'case' because it consumes too much
+    > room."
+
+    No, that's not it at all. We don't indent 'case' because it matches with
+    the 'switch', not because of any room issues.
+
+    > That's inconsistent with the rest of normal indenting style, and
+    > a poor excuse to keep within an obsolete and unnecessary restriction.)
+
+    It's not at all inconsistent. It's just making clear how the parts of the
+    function group together.
+
+    Indenting a case-statement an extra level is as stupid as indenting "else"
+    one extra level from the "if ()" it goes together with. Do you think that
+    would be sane?
+
+    The fact that the 'case' thing is technically parsed as a separate
+    statement in C doesn't change anything.
+
+[*] Don't put multiple statements on a single line unless you have
+    something to hide:
+    if (condition) {do_this};
+      do_something_everytime;
+
+[*] Don't put multiple assignments on a single line either.
+
+[*] coding style is super simple.  Avoid tricky expressions.
+
+[*] Get a decent editor and don't leave whitespace at the end of lines.
+
+[*] Doing things the common way is important
+    An example of "common vs non-common" is this:
+
+    if (0 <= x)
+        do something..
+
+    is something that crazy people do (sadly, one of the crazy people taught
+    the git maintainer C programming, so now even sane people do it). It's
+    crazy because it's uncommon, which means that most people have to think
+    about it A LOT MORE than about
+
+    if (x >= 0)
+        do something..
+
+    even though technically both are obviously EXACTLY THE SAME THING.
+
+
+        Breaking long lines and strings
+
+[*] 所有超过80列的应该是认为代码写的有问题的警告，解决方式是尽可能不超过80列，而不是简单
+    断行；第一选择是不超过80列一行搞定，其次是超过80列不多一行搞定，实在没办法才采用折行；
+    You should try to prevent writing lines longer than 80 characters rather than breaking them
+
+    Quite frankly, I personally am considering removing "checkpatch.pl". That
+    thing is just a nazi dream. That hard-coded 80-character limit etc is just
+    bad taste.
+
+    Dammit, code cleanliness is not about "automated and mindless slavish
+    following of rules". A process that is too inflexible is a *bad* process.
+    I'd much rather have a few 80+ character lines than stupid and unreadable
+    line wrapping just because the line hit 87 characters in length.
+
+    I don't have 25 lines on a screen either.
+
+
+    I don't think that the notion of "80 characters per line" is *wrong* per
+    se.
+
+    So don't take this the wrong way - I think the goal really _should_ be
+    that a function fits on a vt100 terminal window (*both* ways: less than 24
+    lines of code, and less than 80 characters wide).
+
+    So I think the notion of trying to keep lines below 80 characters is
+    admirable. That part isn't the problem.
+
+    The problem is when "coding style guidelines" become "hard inviolate
+    rules".
+
+    Yes, code should be less than 80 characters wide.
+
+    But hey, sometimes it's just more readable to have one line that is
+    slightly longer than it should be, than to split something that is awkward
+    to split.
+
+    The thing that scripts (and computers) have a really hard time with is
+    "judgement".
+
+    So I don't disagree with any of the checkpatch.pl things individually, but
+    I do disagree with the notion that we should enforce strict rules, when
+    all the guidelines are really just guidelines.
+
+    For example, the coding style also says that you should avoid indentation
+    that is more than three deep. It's _true_, but does that mean that we
+    should make deeply indented code *illegal*? Obviously not. It's a "please
+    try to split your functions up" kind of thing.  Not a hard rule.
+
+    The only reason I picked the 80-character thing in particular is that
+    I've seen a fair number of patches that don't do anything *but* change
+    that, and quite often I think it makes the code look worse if it's not
+    done judiciously..
+
+    There are other things we really *could* be strict against. For example,
+    the "space followed by tab" thing really is something where a strict rule
+    (at least for C files) probably really *is* a good idea, because there
+    really is never a really good reason for it. Add the fact that the problem
+    is "invisible" in most editors, and having a script that checks for it
+    makes even more sense.
+
+    So I'm happy with checkpatch.pl as a *guide*, but I'm not happy if it
+    means that people start taking it as a *requirement*.
+
+    (And then I'm doubly unhappy when there are issues like code movement and
+    file renames etc, where there are other reasons why we actually want to
+    keep the code as unmodified as possible).
+
+
+    On Fri, 22 Feb 2008, Al Viro wrote:
+    >
+    > ... if your style is lousy.  I agree that situation with printks is
+    > not normal in that respect and I certainly have no love for the
+    > checkpatch nonsense, but pressure to keep the fucking nesting depth
+    > low is a Good Thing(tm).
+
+    I do agree, but that has little to do with line length *directly*.
+
+    IOW, I'd personally be happier with a checkpatch that calculated
+    "complexity" and indentation over line length.
+
+    There is definitely a correlation there: there is no question that complex
+    lines with deep indentation tend to be long. So yes, "long lines are
+    correlated with bad code" is certainly true to some degree.
+
+    But sometimes lines are long just because it's a function call with
+    multiple parameters, and it's just three levels indented, and it had a
+    string there too. It may be long, but it's not complex, and keeping it on
+    one line actually makes it much easier to visually parse (and grep for,
+    for that matter).
+
+    So I'd be happier with warnings about deep indentation (but how do you
+    count it? Will people then try to fake things out by using 4-space indents
+    and then "deep" indentations will look like just a couple of tabs?) and
+    against complex expressions (ie "if ((a = xyz()) == NULL) .." should just
+    be split up into "a = xyz(); if (!a) ..", but there are sometimes reasons
+    for those things too!
+
+
+    On Sat, 23 Feb 2008, David Newall wrote:
+    >
+    > Do you actually get 80 columns wide on it?
+
+    Do people really care that deeply?
+
+    I still sometimes use small terminal windows - for a while I had my
+    default terminal come up as 100x40, but I'm back to the standard 80x24,
+    and while I often resize them, I certainly don't always.
+
+    And do I find lines longer than 80 charactes unreadable? Hell no.
+
+    Quite frankly, on a 80x24 display, I'll take long lines over split-up ones
+    *any* day. For things like doing "git grep xyzzy", I'd *much* rather get
+    the occasional long line that wraps (or, if I'm in "less -S", that I have
+    to press right-arrow to see), than see just a meaningless fragment because
+    somebody decided that they should always fit in 80 characters.
+
+    So *consistently* long lines are the problem, not the occasional one. The
+    occasional one is likely more readable as it is, than split up.
+
+    Here's an example from code that actually looks pretty good in general:
+
+        static unsigned long
+        calc_delta_mine(unsigned long delta_exec, unsigned long weight,
+                        struct load_weight *lw)
+
+    and look around that function in general: it's doesn't match the coding
+    standard, but also compare the output of
+
+        git grep calc_delta_mine
+
+    with the output of something like
+
+        git grep update_load_sub
+
+    which actually shows you what the calling convention is.
+
+    So putting that long function definition on one line would make it a
+    108-character line or something like that, but it would have advantages
+    too.  It would have advantages for anything that is line-based (I use
+    grep for *everything*, but maybe I'm just odd), but it would also
+    actually be more readable for the people who have bigger windows.
+
+    But my point is, some of those advantages remain even with small
+    terminals, and quite often the downsides aren't even all that huge.
+    Most editors wrap or chop the line according to your preferences (mine
+    are personally to chop), and if it's a fairly uncommon thing, those
+    downsides shrink further.
+
+    Is 108 characters perhaps *too* long? In the above case it probably is,
+    since the downside of splitting the patch is pretty small (it's a static
+    function, only used in that file, the "grep" argument is weak, yadda
+    yadda).  But I'm just saying that it's not 100% obvious *even*if* you're
+    on a 80x24 terminal, and in some other cases the downside of splitting
+    the line can be much bigger (strings or more spread-out function calls
+    and declarations etc).
+
+    The line length problem would probably be better attacked as something
+    more akin to the rule
+
+    - do a rolling window of <n> last non-empty lines (n ~ 15 or so)
+
+    - if more than <m> of those lines were longer than 72 charactes,
+    something is wrong (m ~ 5 or so).
+
+    which talks more about what matters - too deep indentation. And also
+    attacks the problem that is really relevant: it's that kind of code that
+    ends up being unreadable because so *much* of it is cut off or wrapped.
+
+    On Wed, 16 Jul 2008, Jesse Barnes wrote:
+    >
+    > Miklos Vajna (1):
+    >       x86/PCI: janitor work in irq.c
+
+    Please don't take patches like this.
+
+    If it's janitor work, the end result should be better. But it's not. This
+    patch is full of stuff like
+
+    -   for(addr = (u8 *) __va(0xf0000); addr < (u8 *) __va(0x100000); addr += 16) {
+    +   for (addr = (u8 *) __va(0xf0000); addr < (u8 *) __va(0x100000);
+    +       addr += 16) {
+            rt = pirq_check_routing_table(addr);
+
+    Which just brings negative value. The code is _harder_ to look at, not
+    easier.
+
+    The 80-character limit is less important than making code look obvious and
+    indentation being readable. Splitting the for(;;) loop just made the
+    indentation look like total crap.
+
+    I'm fixing it up (since it also caused trivial conflicts), but I'd ask
+    people to just ignore that sh*t-for-brains that is the long-line warning
+    when trying to fix it may silence a warning, but results in worse code!
+
+    On Thu, 17 Jul 2008, Maciej W. Rozycki wrote:
+    >
+    >  Conveniently "for" is short enough for indentation like this:
+    >
+    >   for (addr = (u8 *) __va(0xf0000);
+    >        addr < (u8 *) __va(0x100000);
+    >        addr += 16) {
+    >                 rt = pirq_check_routing_table(addr);
+
+    I don't actually like that one very much either.
+
+    It's perfectly readable when looking at things closely, but it's not very
+    nice when quickly "scanning" code visually. It looks like two separate
+    indents.
+
+    Btw, that "code scanning" is not necessarily a bad idea. It's actually
+    pretty interesting to print code out in a 2-point font (or just open a
+    terminal and do "ctrl -" several times to make the code basically
+    unreadable). See if the code flow makes sense from 10,000 feet - you can
+    pick up overlong functions and various other dubious practices really
+    clearly (#ifdef's in code etc).
+
+    (IOW, the whole point of the exercise is to _not_ be able to actually read
+    the code, but just look at the _shape_ of it).
+
+    Btw, that commit also did things like change the coding style to a
+    non-kernel coding style by changing
+
+        static int function(xyz..)
+
+    to
+
+        static int
+        function(xyz..)
+
+    just to make lines shorter. Again - introducing bigger problems than it
+    actually fixes.
+
+
+    On Mon, 12 Jan 2009, Pallipadi, Venkatesh wrote:
+    > +     if (strict_prot ||
+    > +         (want_flags == _PAGE_CACHE_UC_MINUS &&
+    > +          flags == _PAGE_CACHE_WB) ||
+    > +         (want_flags == _PAGE_CACHE_WC &&
+    > +          flags == _PAGE_CACHE_WB)) {
+
+    Please don't write code like this.
+
+    Do it as an inline function that returns true/false and has comments on
+    what the hell is going on.
+
+    If a conditional doesn't fit on one line, it should generally be
+    abstracted away into a readable function where the name explains what it
+    does conceptually.
+
+    On Tue, 7 Apr 2009, Roland McGrath wrote:
+    >
+    > This fixes all the checkpatch --file complaints about kernel/ptrace.c
+    > and also removes an unused #include.  I've verified that there are no
+    > changes to the compiled code on x86_64.
+
+    Please don't bother with that insane "line length" option when using
+    "--file". At least not if the "fix" is to just mindlessly split the line.
+    That is _never_ a fix.
+
+    Changes like these:
+
+    > -int ptrace_readdata(struct task_struct *tsk, unsigned long src, char __user *dst, int len)
+    > +int ptrace_readdata(struct task_struct *tsk, unsigned long src,
+    > +         char __user *dst, int len)
+
+    > -int ptrace_writedata(struct task_struct *tsk, char __user *src, unsigned long dst, int len)
+    > +int ptrace_writedata(struct task_struct *tsk, char __user *src,
+    > +          unsigned long dst, int len)
+
+    >   case PTRACE_GETEVENTMSG:
+    > -     ret = put_user(child->ptrace_message, (unsigned long __user *) data);
+    > +     ret = put_user(child->ptrace_message,
+    > +                (unsigned long __user *) data);
+
+    just make the code harder to 'grep'.
+
+    Yes, at some point you have to split lines, but that point is not 80
+    columns any more.  The advantage of getting the whole line when grepping
+    for function names much outweighs the downside of somebody using those
+    old 80x24 green phosphorous vt52's.
+
+    [ The same thing very much goes for complex if-statements etc.  If
+    people can't stand the long lines, the primary solution would be to
+    turn a complex conditional into a helper inline functions, or to fix
+    excessive indentation by splitting up functions.
+
+    In the above case, the last one could perhaps have been handled
+    creating a new variable for and moving the cast to the initialiser,
+    for example. Is it worth it to avoid a 85-column line? Probably not.
+
+    And some lines just end up long.  I think 100 characters may be a
+    more reasonable limit for "too long", but quite frankly, it depends on
+    the line.
+
+    So I think 'checkpatch' is pure crap in this area, and I've told
+    people so before, and they keep telling me that it has relaxed it's
+    idiotic warnings, but that is apparently just a lie. ]
+
+    On Wed, 8 Apr 2009, Christian Borntraeger wrote:
+    >
+    > Isnt checkpatch just following what is written down in the Documentation
+    > folder? Maybe adopting the following part of CodingStyle and add more
+    > examples for good and bad would give the checkpatch authors a better
+    > idea about your intent.
+
+    The thing is, it's true that it's good if things fit in 80 columns.
+
+    But _splitting_ lines isn't the answer. Making code simpler is, but
+    somehow the 80-column warning never causes that to happen - instead people
+    just split.
+
+    And yes, I guess we should remove the language saying so. It's not from
+    my original coding stule, it was added later by others, and came through
+    Andrew (commit 560362dafe4de60db70f2c298a53f4613453a78b: "[PATCH]
+    Codingstyle update" in the historical Linux archive).
+
+
+    On Thu, 9 Apr 2009, Ingo Molnar wrote:
+    >
+    > We should perhaps introduce an too-deep-indentation warning: any
+    > function with "[;{}]$" lines of 4 tabs in a row is already suspect
+    > IMHO. At 5 it's definitely crazy and ugly.
+    >
+    > This would be a very efficient function-length reductor: it cannot
+    > be worked around via line wraps.
+
+    People would start using spaces to try to work around it instead, which is
+    a worse cure than the problem.
+
+    Also, the thing is, a long _individual_ line is not a problem even if you
+    have a 80-column terminal. Sane editors will have a marker for "this line
+    continues", and even if you have an insane editors that doesn't do that,
+    it's pretty obvious - and if you really care about the end of that
+    _particular_ line (most of the time you don't), you can just move to that
+    line.
+
+    So if you have a couple of long lines occasionally, that's not a huge
+    problem. In fact, that's why I hate splitting lines so much: the "false
+    indentation" that a line split causes is generally much more confusing
+    visually (not so much in something like a function header, but often very
+    much so inside the code itself).
+
+    > It would also be wonderful to warn about bad 80 columns 'fixes' -
+    > i've seen way too many perfectly fine cleanups damaged by ugly
+    > line-wrapping solutions.
+
+    The thing is, it's very hard to warn about those. You need more
+    understanding than your average perl-script can ever get.
+
+    > We could also up the limit to 90 or 100 columns. My terminals are at
+    > 90 columns and that's still pretty ergonomic.
+
+    I tend to start out with a 80x24 and just resize it, and end up at some
+    random value. It's usually in the 90x40 range for me. But I do want the
+    code to be perfectly _readable_ in a 80x24 window, and quite frankly, if
+    you look at something like kernel/ptrace.c, it really generally is.
+
+    So sure, that "int ptrace_readdata()" line is longer than that, and won't
+    show completely. But you don't miss any huge glaring code issues even in
+    the truncated mode. In fact, if I try to use 80x24, my biggest issue will
+    inevitably be not the 80 part, but the 24 part.
+
+    IOW, I think there is much more reason to hate long _functions_ than there
+    is reason to hate long lines. Both cause you to scroll. The long function
+    where there is action over more than 24 lines happens a lot more.
+
+
+    On Thu, 12 Nov 2009, Andres Baldrich wrote:
+    >
+    > (Kernel)/Documentation/CodingStyle
+    > line 83:
+
+    A lot of people have added code to CodingStyle. That doesn't make it
+    final. For example, that 80-column thing never existed in my original
+    coding style, for a reason.
+
+    I'm really inclined to just remove the stupid thing entirely both from
+    coding-style and from checkpatch.
+
+    80 columns do not matter. What matters is:
+    - indentation
+    - complex expressions and statements
+
+    and those two issues _together_ means that 80+ columns should be damn
+    rare, but the 80 columns itself is not at all that important.
+
+    Much more important than 80 columns should be the general guideline that a
+    "terminal window" may be as small as 80x24. But notice how 80 is just a
+    small part of that limitation - the 24 is as important as the 80. We have
+    a guideline that functions should fit on a screenful or two, ie we should
+    generally aim for functions to be <50 lines long.
+
+    And the 80-column thing is EXACTLY THE SAME THING. We should remember that
+    people may read the code using a roughly 80x24 screen size, but the same
+    way that nobody sane thinks that "24" is some hard limit on number of
+    lines, why do people suddenly think that "80" is a hard limit on the
+    number of columns?
+
+    On Fri, 18 Dec 2009, Paul Mundt wrote:
+
+    > On Thu, Dec 17, 2009 at 09:12:24PM -0800, Joe Perches wrote:
+    > > On Thu, 2009-12-17 at 23:29 -0500, Valdis.Kletnieks@vt.edu wrote:
+    > > > Yeah, but I respectfully submit that if the regexp '^\t{6}' matches a non-
+    > > > continuation line, it's probably in its rights to whinge.
+    > > >   grep -r -P '^\t{7:}(?!(.*,$|.*\);$))' . | more
+    > > > produces a whole lot of "this can't end well" output.
+    > >
+    > > I think this is a good test to add to checkpatch.
+    > >
+    > > Add 105 character long line WARN test
+    > > Add 80 character long line STRICT test
+    > > Add 6+ leading indent tabs test, consider restructuring
+    > >
+    > This looks like a reasonable compromise.
+
+    I like this. Except I think the indent test should count spaces too some
+    way. Or do we already warn about excessive space that should be tabs?
+
+[*] Line continuation: two indentations or embeded aligned, whatever is
+    further indented.
+    if (...
+            ...) {
+        do_sth();
+    }
+
+[*] never break user-visible strings such as printk messages, because that
+    breaks the ability to grep for them.
+
+[*] when nested inside parentheses, try to break lines at the shallower nesting
+    levels, not the deeper ones.
+    x = this_is_a(1, 2, very_long(line(3, 4, 5)));
+    You might break it as:
+    x = this_is_a(1, 2,
+                very_long(line(3, 4, 5)));
+    not:
+    x = this_is_a(1, 2, very_long(line(3,
+                                    4, 5)));
+[*] 字符串常量禁止断行；
+
+[*] 断行一元或者3元操作符和操作数同一行，2元操作符放在上一行的行末；
+
+[*] The thing is, it's true that it's good if things fit in 80 columns.
+
+
+        Placing Braces and Spaces
+
+[*] put the opening brace last on the line, and put the closing brace first,
+    thusly:
+    if (x is true) {
+        we do y
+    }
+    This applies to all non-function statement blocks (if, switch, for, while, do).
+    E.g.:
+    switch (action) {
+    case KOBJ_ADD:
+        return "add";
+    case KOBJ_REMOVE:
+        return "remove";
+    case KOBJ_CHANGE:
+        return "change";
+    default:
+        return NULL;
+    }
+
+[*] there is one special case, namely functions: they have the opening brace
+    at the beginning of the next line, thus:
+    int function(int x)
+    {
+        body of function
+    }
+
+[*] the closing brace is empty on a line of its own, _except_ in the cases
+    where it is followed by a continuation of the same statement,
+    ie a "while" in a do-statement or an "else" in an if-statement, like this:
+    do {
+        body of do-loop
+    } while (condition);
+    and
+    if (x == y) {
+        ..
+    } else if (x > y) {
+        ...
+    } else {
+        ....
+    }
+
+[*] 控制结构的body都加{}即使是单条语句.
+    if (condition) {
+        action();
+    }
+    and
+    if (condition) {
+        do_this();
+    } else {
+        do_that();
+    }
+
+[*] Please fix the formatting of your code.
+
+    "for" and "if" are not functions, and they have a space before the
+    parenthesis.
+
+    And pretty much every single conditional in this patch is spread out over
+    two or more lines and has at least three different indentations. There's
+    something wrong here. Code can't look this bad and still be fine. Some of
+    this looks like random whitespace noise:
+
+    +               if(is_acpi_reserved(cfg->address,
+    +                                   cfg->address + size - 1))
+    +                       printk(KERN_NOTICE "PCI: MCFG area at %Lx reserved "
+    +                               "in ACPI motherboard resources\n",
+    +                               cfg->address);
+    +               else {
+
+    That's just horrid. Please try to make the code _look_ nicer.
+
+    For example, just making "is_acpi_reserved()" take a start/len thing
+    instead, would allow you to at least do
+
+        if (is_acpi_reserved(cfg->address, size)) {
+            printk(KERN_NOTICE "PCI: MCFG area at %Lx reserved "
+                "in ACPI motherboard resources\n",
+                cfg->address);
+        } else {
+            ...
+
+    (and has the braces right too - don't pair an unbraced "if ()" with a
+    braced "else" statement), and that together with making the body of the
+    for-loop a separate function would possibly make that code read a lot
+    better.
+
+    Same goes for this thing:
+
+    +                       if((pci_probe & PCI_PROBE_CONF1) &&
+    +                          e820_all_mapped(cfg->address,
+    +                                          cfg->address + size - 1,
+    +                                          E820_RESERVED))
+    +                               printk(KERN_NOTICE "PCI: MCFG area at %Lx reserved in E820\n",
+    +                                       cfg->address);
+    +                       else
+    +                               goto reject;
+
+    there really is *not* a highly coveted prize for having the most different
+    indentation in the fewest possible lines of code!
+
+    Yeah, I realize that maybe this is nit-picking, but trying to read this
+    patch really does make you go blind. It violates so many coding standards
+    that it's almost impossible to read the code itself. It's made worse by
+    the fact that you then also used Thunderbird to send the patch, and had it
+    set for
+
+
+[*]On Wed, 24 Dec 2008, Krzysztof Halasa wrote:
+    >
+    > So is a case like
+    >   do
+    >       x;
+    >   while (y);
+    > It can't be made more clear with brackets.
+
+    Oh yes it can. People look at that, and it's so uncommon that they
+    literally believe it is a mis-indent.
+
+    Your example with nested if-statements are totally pointless, because you
+    didn't even apparently understand my comment about "while()" having two
+    totally different meanings (which is not true of "if()"), nor realize the
+    importance of how common something is.
+
+    Common patterns become things that people take for granted and don't have
+    any trouble with. In contrast, do-while without braces is _extremely_
+    uncommon.
+
+    > IOW: improving the style is great. Changing it only to silence some
+    > tool is not.
+
+    Sorry, you're wrong. It's not changed to silence some tool. THIS IS THE
+    KERNEL CODING STYLE.
+
+    I don't care one whit about your personal coding style. The kernel has
+    braces. End of discussion. sparse complains about lack of them.
+    Comprende?
+
+    > Right, but they (at least for me) make it more readable.
+
+    I don't care.
+
+    > kmalloc(sizeof i) just doesn't look good, the operator looks like
+    > a variable name.
+
+    And I agree with you. "sizeof i" doesn't look good. It's uncommon, and
+    doesn't match peoples expectations.
+
+    > But there is this return statement. Some people tend to write
+    > return (x); I simply write return x;
+
+    I do to. And it's the common thing to do, and only totally confused people
+    think that 'return' is a somehow remotely like a "function" of its
+    arguments (the way 'sizeof' is - sizeof _is_ a function of its arguments,
+    albeit a very rare one).
+
+    > It's clear, and so is a simple do-while.
+
+    No. "return x;" is clear because it's the common thing, which means that
+    peopel are good at reading it.
+
+    Another example of "common vs non-common" is this:
+
+        if (0 <= x)
+            do something..
+
+    is something that crazy people do (sadly, one of the crazy people taught
+    the git maintainer C programming, so now even sane people do it). It's
+    crazy because it's uncommon, which means that most people have to think
+    about it A LOT MORE than about
+
+        if (x >= 0)
+            do something..
+
+    even though technically both are obviously EXACTLY THE SAME THING.
+
+    Can you see the argument? Doing things the common way is important,
+    because it allows people to see what they mean without having to think
+    about it. They just scan it, and the meaning is clear.
+
+    And that's why "do while" without braces is bad. If you scan it quickly on
+    its own, you may well end up just seeing the
+
+        while (x);
+
+    part, and get confused ("oh, a delay loop"). But if you see
+
+        } while (x);
+
+    you aren't confused, because the latter one is clearly an ending condition
+    of a do-while loop, IN A WAY THAT THE FIRST ONE IS NOT!
+
+    See?
+
+    do-while is very special, because as mentioned, "while" is a really magic
+    C keyword that has two TOTALLY DIFFERENT meanings. Don't make people look
+    for the "do".
+
+[*]
+    The thing is, it's true that it's good if things fit in 80 columns.
+
+    But _splitting_ lines isn't the answer. Making code simpler is, but
+    somehow the 80-column warning never causes that to happen - instead people
+    just split.
+
+    And yes, I guess we should remove the language saying so. It's not from
+    my original coding stule, it was added later by others, and came through
+    Andrew (commit 560362dafe4de60db70f2c298a53f4613453a78b: "[PATCH]
+    Codingstyle update" in the historical Linux archive).
+
+[*] 禁止断行；
+    So if you have a couple of long lines occasionally, that's not a huge
+    problem. In fact, that's why I hate splitting lines so much: the "false
+    indentation" that a line split causes is generally much more confusing
+    visually (not so much in something like a function header, but often very
+    much so inside the code itself).
+
+    OW, I think there is much more reason to hate long _functions_ than there
+    is reason to hate long lines. Both cause you to scroll. The long function
+    where there is action over more than 24 lines happens a lot more.
+
+
+        Spaces
+
+[*] use of spaces depends (mostly) on function-versus-keyword usage.
+    Use a space after (most) keywords.  The notable exceptions are sizeof,
+    typeof, alignof, and __attribute__, which look somewhat like functions
+    (and are usually used with parentheses in Linux, although they are not
+    required in the language, as in: "sizeof info" after
+    "struct fileinfo info;" is declared).
+
+[*] use a space after these keywords:
+    if, switch, case, for, do, while
+
+[*] not with sizeof, typeof, alignof, or __attribute__.  E.g.,
+    s = sizeof(struct file);
+
+[*] Do not add spaces around (inside) parenthesized expressions.
+    This example is *bad*:
+    s = sizeof( struct file );
+
+[*] When declaring pointer data or a function that returns a pointer type, the
+    preferred use of '*' is adjacent to the data name or function name and not
+    adjacent to the type name.  Examples:
+    char *linux_banner;
+    unsigned long long memparse(char *ptr, char **retptr);
+    char *match_strdup(substring_t *s);
+
+[*] Use one space around (on each side of) most binary and ternary operators,
+    such as any of these:
+    =  +  -  <  >  *  /  %  |  &  ^  <=  >=  ==  !=  ?  :
+
+    but no space after unary operators:
+    &  *  +  -  ~  !  sizeof  typeof  alignof  __attribute__  defined
+
+[*] no space before the postfix increment & decrement unary operators:
+    ++  --
+
+[*] no space after the prefix increment & decrement unary operators:
+    ++  --
+
+[*] and no space around the '.' and "->" structure member operators.
+
+[*] Do not leave trailing whitespace at the ends of lines.
+
+[*] 函数名之后不要留空格。‘(’向后紧跟，‘)’、‘,’、‘;’向前紧跟，紧跟处不留空格。
+    ‘,’之后要留空格。‘;’不是行结束符号时其后要留空格。
+    例子中的 凵 代表空格。
+    for凵(i凵=凵0;凵i凵<凵MAX_BSC_NUM;凵i++) {
+        do_thing(a,凵b);
+    }
+
+[*] #define 宏时候中间使用单个空格隔开
+    #define凵APP_DEFAULT_NIC_RX_RING_SIZE凵(4096)
+
+[*] int i = 0; // Semicolons usually have no space before them.
+    int x[2] = {0}; // Spaces inside braces for array initialization are
+    for (i = 0; i < 5; i++) {
+    switch (i) {
+    case 1: // No space before colon in a switch case.
+    ...
+
+    x = 0; // Assignment operators always have spaces around them.
+    x = -5; // No spaces separating unary operators and their
+    ...
+
+[*] 不同逻辑程序块之间要使用空行分隔
+
+
+        Naming
+
+[*] C is a Spartan language, and so should your naming be.
+    C programmers do not use cute names like ThisVariableIsATemporaryCounter.
+    A C programmer would call that variable "tmp", which is much easier to
+    write, and not the least more difficult to understand.
+
+[*] HOWEVER, while mixed-case names are frowned upon, descriptive names for
+    global variables are a must.  To call a global function "foo" is a
+    shooting offense.
+
+[*] GLOBAL variables (to be used only if you _really_ need them) need to
+    have descriptive names, as do global functions.  If you have a function
+    that counts the number of active users, you should call that
+    "count_active_users()" or similar, you should _not_ call it "cntusr()".
+
+[*] LOCAL variable names should be short, and to the point.  If you have
+    some random integer loop counter, it should probably be called "i".
+    Calling it "loop_counter" is non-productive, if there is no chance of it
+    being mis-understood.  Similarly, "tmp" can be just about any type of
+    variable that is used to hold a temporary value.
+
+[*] If you are afraid to mix up your local variable names, you have another
+    problem, which is called the function-growth-hormone-imbalance syndrome.
+    See chapter 6 (Functions).
+
+[*] On Mon, 13 Apr 2009, Alexey Dobriyan wrote:
+    >
+    > Well, in OpenVZ everything is in kernel/cpt/ and prefixed with "cpt_"
+    > and "rst_".
+
+    So?
+
+    We're not merging OpenVZ code _either_.
+
+    > And I think "cr_" is super nice prefix: it's short, it's C-like,
+    > it reminds about restart part
+
+    It does no such thing. THAT'S THE POINT. "cr" means _nothing_ to anybody
+    else than some CR-specific people, and those people don't even need it!
+
+    Look around you. We try to use nicer names. We spell out "cpufreq", we
+    don't call it "cf".
+
+    On Tue, 14 Apr 2009, Alexey Dobriyan wrote:
+    > >
+    > > We're not merging OpenVZ code _either_.
+    >
+    > This is to give example of other prefixes: cpt_ and rst_
+    > Are they fine?
+
+    Do you secretly work for IBM?
+
+    IBM has a well-known disdain for vowels, and basically refuses to use them
+    for mnemonics (they were called on this, and did "eieio" as an instruction
+    just to try to make up for it).
+
+    But I'm from Finland. In Finnish, about 75% of all letters are vowels. I
+    find this dis-emvoweling to be stupid and impractical. Without vowels, you
+    can't tell Finnish words apart (admittedly, _with_ vowels, you generally
+    cannot pronounce them, so to a non-Finn it doesn't much matter).
+
+    My point is, let's go for a happy medium - LEAVE THE F*CKING VOWELS IN
+    PLACE ALREADY.
+
+    So let's call it "checkpoint" and "restore". Ok?
+
+[*] 考虑对象命名的原则就是从使用这个对象的使用场景描述；比如if （is_my_pkt（））
+    考虑，肯定命名成is_my_pkt 代码读起来更容易理解；
+
+[*] 标识符只使用26个英文字母，10个数字，及下划线的一个子集来组成，并严格禁止使用
+    连续的下划线，下划线也不能出现在标识符头或结尾（预编译开关除外）这样做的目的
+    是为了使程序易读。因为 variable_name 和 variable__name 很难区分，
+    下划线符号‘_’若出现在标识符头或结尾，容易与不带下划线‘_’的标识符混淆
+
+[*] 变量名一律小写，单词间以下划线相连；
+
+[*] 程序中局部变量不要与全局变量重名
+
+[*] 程序中不要出现仅靠大小写区分的相似的标识符
+
+[*] 文件名要全部小写，可以包含下划线（_)按项目约定来。
+    my_useful_class.c
+    通常，尽量让文件名更加明确，http_server_logs.h 就比logs.h 要好，
+    定义文件时文件名一般成对出现，如foo_bar.h 和foo_bar.c，对应FooBar模块。
+
+[*] 对返回布尔类型值(真或者假)的函数命名，应该清楚地反映其返回值情况。
+    if (chceck_octal)
+    是不好的，因为它没有指明什么时候返回真，什么时候返回假。而：
+    if (is_octal)
+    就把事情说清楚了：如果参数是八进制数字则返回真，否则为假。
+
+
+        类型
+[*]
+For various reasons, the kernel developers have a certain hatred for typedef that almost defies explanation. Their rationale is
+
+typedef hides the real type of data structures.
+
+Because the type is hidden, code is more prone to do bad things, such as pass a structure by value on the stack.
+
+typedef is just being lazy.
+
+Therefore, to avoid ridicule, avoid typedef.
+
+Of course, there are a few good uses of typedefs: hiding an architecture-specific implementation of a variable or providing forward compatibility when a type may change. Decide carefully whether the typedef is truly needed or exists just to reduce the number of characters you need to type.
+
+[*] Please don't use things like "vps_t". It's a _mistake_ to use typedef
+    for structures and pointers. When you see a
+    vps_t a;
+
+    in the source, what does it mean?
+    In contrast, if it says
+    struct virtual_container *a;
+    you can actually tell what "a" is.
+
+[*] Lots of people think that typedefs "help readability". Not so. They are
+    useful only for:
+
+ (a) totally opaque objects (where the typedef is actively used to _hide_
+     what the object is).
+
+     Example: "pte_t" etc. opaque objects that you can only access using
+     the proper accessor functions.
+
+     NOTE! Opaqueness and "accessor functions" are not good in themselves.
+     The reason we have them for things like pte_t etc. is that there
+     really is absolutely _zero_ portably accessible information there.
+
+ (b) Clear integer types, where the abstraction _helps_ avoid confusion
+     whether it is "int" or "long".
+
+     u8/u16/u32 are perfectly fine typedefs, although they fit into
+     category (d) better than here.
+
+     NOTE! Again - there needs to be a _reason_ for this. If something is
+     "unsigned long", then there's no reason to do
+
+    typedef unsigned long myflags_t;
+
+     but if there is a clear reason for why it under certain circumstances
+     might be an "unsigned int" and under other configurations might be
+     "unsigned long", then by all means go ahead and use a typedef.
+
+ (c) when you use sparse to literally create a _new_ type for
+     type-checking.
+
+ (d) New types which are identical to standard C99 types, in certain
+     exceptional circumstances.
+
+     Although it would only take a short amount of time for the eyes and
+     brain to become accustomed to the standard types like 'uint32_t',
+     some people object to their use anyway.
+
+     Therefore, the Linux-specific 'u8/u16/u32/u64' types and their
+     signed equivalents which are identical to standard types are
+     permitted -- although they are not mandatory in new code of your
+     own.
+
+     When editing existing code which already uses one or the other set
+     of types, you should conform to the existing choices in that code.
+
+ (e) Types safe for use in userspace.
+
+     In certain structures which are visible to userspace, we cannot
+     require C99 types and cannot use the 'u32' form above. Thus, we
+     use __u32 and similar types in all structures which are shared
+     with userspace.
+
+    Maybe there are other cases too, but the rule should basically be to NEVER
+    EVER use a typedef unless you can clearly match one of those rules.
+
+[*] In general, a pointer, or a struct that has elements that can reasonably
+    be directly accessed should _never_ be a typedef.
+
+[*] 尽可能少用类型抽象
+
+[*] 如果使用类型定义则使用typedef 别使用宏,
+   typedef  char *ntcs_t;
+   const ntcs_t p = &data;
+   p的类型是指向char类型的常量指针,而不是指向常量char的指针(#define);
+
+[*] struct中的const field和普通const一样的语言；就是只能初始化，不能赋值；
+
+[*] 有符号整数
+    有符号整数溢出未定义
+    除了定了宽度，同时对能表示的数值的最小范围进行了规定；
+    有符号数字编码方式要么是2的补码、对1的补码或者带符号表示法，标准没有规定；
+    但是正数的这三种编码方式都一样
+
+[*] 无符号整数
+    无符号数字编码方式唯一, 溢出定义为取模
+    有些人，包括一些教科书作者，推荐使用无符号类型表示非负数，类型表明了数值取值
+    形式, 但是，在C 语言中，这一优点被由其导致的bugs 所淹没。看看：
+    unsigned int i;
+    for (i = foo.Length() - 1; i >= 0; i--) ...
+    上述代码永远不会终止！有时gcc 会发现该bug 并报警，但通常不会。
+    类似的bug 还会出现在比较有符合变量和无符号变量时，
+    主要是C 的类型提升机制会致使无符号类型的行为出乎你的意料。因此，
+    使用断言声明变量为非负数，不要使用无符号型。只有当bit数组或者是必须要求某个
+    宽度的范围内要存放一个很大的正整数的时候才使用无符号数，
+    比如ipv4的ip头里面的ip字段，必须是32比特，因为要求是32比特，
+    且需要表示的数值很大；即使这个时候如果用无符号数和有符号数混合进行运算，最好
+    先手动转换成有符号数；
+    尽可能少用无符号数： 代替方案：用更宽的有符号数表示，
+    在需要unsigned longlong才能表示下或者宽度有要求，取值也有要求的情况下才使用
+    无符号，比如ip报文中的ip地址只能用uint32_t;
+
+[*] 整型（Integer Types）
+    如果程序中需要不同大小的整型变量，
+    可以使用<stdint.h>中的精确宽度（precise-width）的整型，如int16_t。
+    <stdint.h>定义了int16_t、uint32_t、int64_t 等整型，
+    在需要确定大小的整型时可以使用它们代替short、unsigned long long 等，
+    使用标准类型如size_t 和ptrdiff_t。
+    最常使用的是，对整数来说，通常不会用到太大，如循环计数等，可以使用普通的int。
+    不要使用uint32_t 等无符号整型，除非你是在表示一个位组（bit pattern）而不是
+    一个数值。
+
+[*] enum的常量的值是int类型 ‘a’ bind的是int类型的值
+
+[*] float类型用常数初始化后面都带f；
+
+[*] c为什么不精确定义标准类型大小，由于c是一个汇编语言，所以尽可能挖掘具体机器
+    的性能，所以把这些和机器密切相关的都放给实现自己去定义；
+
+[*] 整数包括很多类型，不是同一个类型；
+
+[*] bitfield 和register类型对象也不能用&运算符和->；
+
+[*] &数组名和指向第一个数组元素类型的指针不同，前者是数组类型的指针，后面是
+    元素类型指针；
+
+[*] 数组只有一维数组，但是可以通过数组的元素是数组的方式模拟出多维数组；
+
+[*] 数组名称除了在sizeof和&运算符以及作为初始化数组的字符数组的时候代表的是数组
+    本身之外，其它的场合都是转换成指向第一个元素的指针，
+    例如作为函数的参数声明为数组类型，自动转换成元素类型的指针类型；
+
+[*] 常量指的是值不会改变的量，可以是左值也可以是右值；常量需要注意时间问题，
+    即什么时候开始创建了她代表的这个值，例如运行前（翻译阶段），还是运行时候，
+    即使是运行时候也有具体什么时候运行时候创建的；
+
+[*] 类型限定符，const volatile 会改变类型；
+
+[*] C字符串 不包括‘\0’，它只是作为一个字符串结束的标示字符，一个结束tag存在，
+
+[*] 类型刻画的是一组界面约束，例如内存表示，内存对齐，能够取值，能够进行的操作；
+
+[*] char 用于表示字符或者字符数组的场景,小整数通过int8_t或者uint8_t使用，
+
+[*] 记住sizeof(void *) != sizeof(int)，如果需要一个指针大小的整数要使用intptr_t。
+
+[*] 整数用0，实数用0.0，指针用NULL，字符用'\0'。
+
+[*] 结构本质上就是一种built-in数据结构
+
+[*] 使用指针考虑方式：指针也就是一个类型，和int一样，有内存分配和内存表示方式，
+    以及内存对齐的要求，也有某些操作，例如* &等操作而已；比如下面的char **token，
+    token表示的是一块内存，有分配，有表示，*token标示的是char* 的内存对象；
+    int rte_strsplit(char *string, int stringlen,
+                char **tokens, int maxtokens, char delim)
+[*] 关注定义的是一个什么类型，然后有什么运算，运算的结果又是什么类型的 值是多少
+
+[*] int i;
+    假如int 类型的变量占据的内存单元为2 个Byte，并且i 所占据的两个内
+    存单元的编号分别为十六进制的ABCD 和ABCE。那么&i 的值则为ABCD。然而&i 这个
+    指针所指向的对象却并非是编号为ABCD 的这个内存单元，事实上&i 这个指针指向的
+    是编号为ABCD 和ABCE这两个Byte——指向变量i 这个数据对象。然而受到“指针就是
+    地址”误导的初学者却很难体会到这点。因为仅仅单有地址这个概念而缺乏指针数据
+    类型这个概念，是不可能理解“指向”的含义的。
+
+[*] 匿名结构体和联合的使用：
+    Anonymous union inside structures are very useful in practice.
+    Consider that you want to implement a discriminated sum type
+    (or tagged union), an aggregate with a boolean and either a float or a
+    char* (i.e. a string), depending upon the boolean flag.
+    With C11 you should be able to code
+
+    typedef struct {
+        bool is_float;
+        union {
+            float f;
+            char* s;
+        };
+    } mychoice_t;
+
+    double as_float(mychoice_t* ch)
+    {
+        if (ch->is_float)
+            return ch->f;
+        else
+            return atof(ch->s);
+    }
+    With C99, you'll have to name the union, and code ch->u.f and ch->u.s which is
+    less readable and more verbose.
+    即匿名联合使用在具名struct，匿名struct使用在匿名union里面；
+
+[*] offsetof 不适用于bitfields
+
+[*] 显式指定数组的边界,即使根据数组初始化列表隐式指定了边界;字符数组使用
+    字符串常量初始化除外原因:提供了长度冗余检查功能;
+
+[*] p[i] 表达式的含义是*((p) + (i)),所以可以这样考虑数组和指针的关系;
+
+[*] 字符数组或者字符串是通过strlen等等来遍历，普通数组是按照定义的时候下表来遍历
+    不一样，所以非字符串直接初始化的数组都需要严格指定边界；
+[*]
+    On Tue, 1 Jun 2004, Mikael Pettersson wrote:
+    >
+    > You're assuming pointers have uniform representation.
+
+    Are we?
+
+    I don't see any point where we cast any function pointers to anything
+    else.
+
+    We cast data pointers all over the place, but that is actually guaranteed
+    to work in C for some "large enough" integer type, and "unsigned long" is
+    pretty much it.
+
+    And even function pointers should be safeish. The fact that some broken
+    architecture (can you say "ia64"?) has totally idiotic calling conventions
+    and requires the caller to load the GP value is _their_ problem. The
+    architecture will either die or hide the fact that it's being silly. For
+    now it's hiding it.
+
+    Repeat after me: practice is more important than theory. A _lot_ more
+    important.
+
+        Linus
+
+
+        Functions
+
+[*] Functions should be short and sweet, and do just one thing.  They should
+    fit on one or two screenfuls of text (the ISO/ANSI screen size is 80x24,
+    as we all know), and do one thing and do that well.
+
+[*] The maximum length of a function is inversely proportional to the
+    complexity and indentation level of that function.  So, if you have a
+    conceptually simple function that is just one long (but simple)
+    case-statement, where you have to do lots of small things for a lot of
+    different cases, it's OK to have a longer function.
+
+[*] However, if you have a complex function, and you suspect that a
+    less-than-gifted first-year high-school student might not even
+    understand what the function is all about, you should adhere to the
+    maximum limits all the more closely.  Use helper functions with
+    descriptive names (you can ask the compiler to in-line them if you think
+    it's performance-critical, and it will probably do a better job of it
+    than you would have done).
+
+[*] Another measure of the function is the number of local variables.  They
+    shouldn't exceed 5-10, or you're doing something wrong.  Re-think the
+    function, and split it into smaller pieces.  A human brain can
+    generally easily keep track of about 7 different things, anything more
+    and it gets confused.  You know you're brilliant, but maybe you'd like
+    to understand what you did 2 weeks from now.
+
+[*] In source files, separate functions with one blank line.  If the function is
+    exported, the EXPORT* macro for it should follow immediately after the
+    closing function brace line.  E.g.:
+
+    int system_is_up(void)
+    {
+        return system_state == SYSTEM_RUNNING;
+    }
+    EXPORT_SYMBOL(system_is_up);
+
+[*] In function prototypes, include parameter names with their data types.
+    Although this is not required by the C language, it is preferred in Linux
+    because it is a simple way to add valuable information for the reader.
+[] static inline not inline static, storage pre inline
+[*] 函数声明与定义返回类型和函数名在同一行，参数也尽可能放在同一行。函数看上去
+    这样：
+    int rte_eth_dev_set_vlan_pvid(uint8_t port_id, uint16_t pvid, int on)
+    {
+    ...
+    }
+    如果同一行文本较多，容不下所有参数：
+    int rte_eth_dev_set_vlan_pvid(uint8_t port_id,
+            uint16_t pvid, int on)
+    {
+        ...
+    }
+    甚至连第一个参数都放不下：这种一般都有问题，需要重新命名等；
+    int rte_eth_dev_set_vlan_pvid(
+            uint8_t port_id,
+            uint16_t pvid,
+            int on)
+    {
+        ...
+    }
+
+[*] 返回值总是和函数名在同一行；
+
+[*] 左圆括号（open parenthesis）总是和函数名在同一行；
+
+[*] 函数名和左圆括号间没有空格；
+
+[*] 圆括号与参数间没有空格；
+
+[*] 左大括号（open curly brace）总在新一行；
+
+[*] 右大括号（close curly brace）总是单独位于函数最后一行；
+
+[*] 函数调用尽量放在同一行，左圆括号后和右圆括号前不要留空格。
+    函数调用遵循如下形式：
+    int ret = dosomething(argument1, argument2, argument3);
+    如果同一行放不下，可断为多行，通用做法是断行尽可能靠右，至少缩进2个tab就ok；：
+    int ret = dosomething(averyveryveryverylongargument1,
+            argum ent2, argument3);
+
+    如果函数名太长，以至于超过行最大长度，可以将所有参数独立成行：
+    if (...) {
+        ...
+        if (...) {
+            do_something_that_require_a_long_function_name(
+                    very_long_argument1, argument2,
+                    argument3, argument4);
+        }
+    }
+
+[*] C - never use an array notation or fucntion notation as a function parameter
+Christ, people. Learn C, instead of just stringing random characters
+together until it compiles (with warnings).
+
+This:
+
+  static bool rate_control_cap_mask(struct ieee80211_sub_if_data *sdata,
+                                   struct ieee80211_supported_band *sband,
+                                   struct ieee80211_sta *sta, u32 *mask,
+                                   u8 mcs_mask[IEEE80211_HT_MCS_MASK_LEN])
+
+is horribly broken to begin with, because array arguments in C don't
+actually exist. Sadly, compilers accept it for various bad historical
+reasons, and silently turn it into just a pointer argument. There are
+arguments for them, but they are from weak minds.
+
+But happily gcc has a really really valid warning (kudos - I often end
+up ragging on the bad warnings gcc has, but this one is a keeper),
+because a few lines down the mistake then turns into pure and utter
+garbage.
+
+It's garbage that was basically encouraged by the first mistake
+(thinking that C allows array arguments), namely:
+
+                  for (i = 0; i < sizeof(mcs_mask); i++)
+
+the "sizeof(mcs_mask)" is _shit_. Since array arguments don't actually
+exist in C, it is the size of the pointer, not the array. The first
+mistake makes the bug look like reasonable code. Although I'd argue
+that the code would actually be bad regardless, since "sizeof" is the
+size in bytes, and the code actually wants the number of entries (and
+we do have ARRAY_SIZE() for that).
+
+Sure, in this case the entries are just one byte each, so it would
+have *worked* had it not been for the array argument issue, but it's
+misleading and the code is just fundamentally buggy and nonsensical in
+two entirely different ways that fed on each other.
+
+That line should read
+
+                  for (i = 0; i < IEEE80211_HT_MCS_MASK_LEN; i++)
+
+and the argument should just have been declared as the pointer it actually is.
+
+A later patch then added onto the pile of manure by adding *another*
+broken array argument, but at least that one then used the proper loop
+for traversal of that array.
+
+The fact that I notice this bug from a very basic "let's just compile
+each pull request and make sure it isn't complete crap" is sad.
+
+Now, it *looks* like the code was just moved, and the "sizeof()" was
+initially correct (because it was a size of an actual array). Well, it
+was "correct" in the sense that it generated the right code, even if
+the whole confusion between "number of entries" and "size in bytes"
+was still there. Then it got moved and turned from "confused but
+happens to generate correct code" into "buggy pile of bovine manure".
+See commit 90c66bd2232a ("mac80211: remove ieee80211_tx_rate
+dependency in rate mask code").
+
+So I can see how this bug happened, and I am only slightly upset with
+Lorenzo who is the author of that commit.
+
+What I can't see is why the code has existed in at least two
+maintainer trees (Johannes' and David's) for a couple of weeks, and
+nobody cared about the new compiler warnings? And it was sent to me
+despite that new warning?
+
+I realy want people to take a really hard look at functions that use
+arrays as arguments. It really is very misleading, even if it can look
+"prettier", and some people will argue that it's "documentation" about
+how the pointer is a particular size. But it's neither. It's basically
+just lying about what is going on, and the only thing it documents is
+"I don't know how to C". Misleading documentation isn't documentation,
+it's a mistake.
+
+I see it in that file for at least the functions rate_idx_match_mask()
+and rate_control_cap_mask(). I tried - and failed - to come up with a
+reasonable grep pattern to try to see how common it is, and I'm too
+lazy to add some sparse check for it.
+
+Please people. When I see these kinds of obviously bogus code
+problems, that just makes me very upset. Because it makes me worry
+about all the non-obvious stuff that I miss.  Sadly, this time I had
+pushed out the merge early (because I wanted to test the wireless
+changes on my laptop), so now the bug is out there.
+
+I'm not sure what the practical *impact* of the bug is. Yes, it only
+traverses four or eight rate entries (depending on 32-bit or
+64-bitness of the kernel) out of the ten that it should. But maybe in
+practice one of the first entries are always good enough matches. So
+maybe _testing_ doesn't actually show this bug, but I sure wish people
+just took compiler warnings more seriously (and were a lot more
+careful about moving things to functions, and never ever used the
+"function argument is an array" model).
+
+               Linus
+
+
+
+[*] 函数词法定义中除了定了很多语句之外，还可以定义static变量，这个并不是语句，
+    而是采用了函数也引入了一个作用域的机制；
+
+[*] 在函数原型中必须包含函数名和它们的参数数据类型和参数名称，而且函数声明和实现
+    处的所有形参名称必须保持一致；因为这样可以很简单的给读者提供更多的有价值的信息;
+    反例
+    static void check_ports_link_status(uint8_t, uint32_t);
+    正例
+    static void check_ports_link_status(uint8_t port_num, uint32_t port_mask);
+
+[*] C 函数对象定义只有全局的没有局部的;
+
+[*] c函数对象是const的，不能赋值，即函数名字不能出现在赋值运算符左侧;
+
+[*] C函数类型包括声明和定义，和普通变量一样，函数也是种类型，只不过函数的初始化
+    并不是用赋值运算符而已，采用{};
+
+[*] c函数包括extern和static函数，缺省是extern函数，所以extern函数就不要写extern;
+    extern函数的声明必须放在.h文件,static函数的声明放在.c文件，static函数不需要声明
+    只要在.c文件中定义就可以，所有使用extern的源文件都通过include这个.h文件进行使用;
+
+[*] c函数调用参数都是传值语义，函数参数传值是赋值的语义，传参数的过程是把实参
+    通过赋值转换到形参的类型，然后构造内存布局，然后调用的时候就可以正确按照形参
+    引用访问对应的内存布局，这个布局是编译器定好的调用者和被调用者之间的约定;
+    可变参数函...参数由于没有指定类型，调用的时候采用缺省参数提升规则构造内存
+    布局，解析也是交给被调用函数进行解析；编译器能保证的就是按照缺省参数提升去
+    构造内存布局；
+
+[*] 变参函数是调用时知道类型，即编译器只有看到这个函数的每个具体的使用的时候，
+    才知道传入的是几个参数，然后每个参数的类型是什么，然后就知道每个具体调用对应i
+    的内存布局；
+    变参数不要太特殊考虑，只是一种弱的约定, 有原型使用者和定义者有明确约定好的
+    协定, 没有的话,编译器根据具体每个具体使用的参数生成对应的内存布局；
+
+[*] 尽量不要使用类型和数目不确定的参数。
+    说明：对于参数个数可变的函数调用，编译器不作类型检查和参数检查。
+    这种风格的函数在编译时丧失了严格的类型安全检查。
+
+[*] 函数参数不能是(...)，即至少要有一个参数是固定的；
+    If a function that accepts a variable number of arguments is defined without
+    a parameter type list that ends with the ellipsis notation, the behavior is
+    undefined
+
+[*] f()是可变参数个数的函数声明,如果函数没有参数，则用void填充。
+    正例：
+    static void app_init_mbuf(void);
+    void app_init(void);
+    反例：
+    static void app_init_mbuf();
+
+[*] 函数形参和定义在函数体最开始定义的标识符具有相同的作用域，所以形参不能在函数
+    体内重新定义;
+
+[*] 定义函数时，参数顺序为：输入参数在前，既是输入又是输出的参数中间然后是
+    输出参数; 当结构变量作为参数时，应传送结构的指针而不传送整个结构体，
+    并且不得修改结构中的元素，用作输出时除外。
+
+[*] c函数返回类型不能是数组类型和函数类型,可以通过返回它俩的指针来间接实现;
+
+[*] 如果函数返回值类型T不是void,则return 之后的表达式必须能满足通过赋值转换成T
+    类型，函数返回的语义就是求return表达式的值，然后通过赋值转换到返回类型的值;
+
+[*] 函数返回的语义是赋值的语义，即把return表达之的值赋值给一个返回值类型的
+    临时对象；
+
+[*] 函数的返回值不是左值;
+    f() = x; /*无效*/
+    *f() = x; /*有效*/
+    f().a = x; /*无效*/
+
+[*] 不要省略返回值的类型，如果函数没有返回值，那么应声明为void类型;
+
+[*] 返回void函数末尾不要加return；
+
+[*] 函数返回值return 表达式中不要使用圆括号。
+    return x;
+    not return (x);
+
+[*] C90 标准规定main()函数只有两种可能的形式：
+    int main(void) { /* ... */ }
+    或：
+    int main(int argc, char argv[]) { / ... */ }
+    后者的第二个参数也可以写作char **argv。也就是说，这两种形式以外的各种
+    main()函数都不符合C90 标准。
+
+    C99 在此基础上做了一个补充，规定main()函数也可以是实现所定义
+    的其他方式。依照这条规定，这种void main()最多只能算是某种编译器的一种“方言”而已
+    ，并且必须是在编译器遵守C99 标准这个前提下。
+    main()函数的特殊之处在于它是程序执行的起点。尽管如此，从其他函数调用
+    main()函数是允许的，甚至从main()递归调用main()也不受限制。C++程序对程序的
+    启动有着更加严格的控制，不允许对main()进行递归调用
+
+[*] 函数名称要和返回值放在一行的依据：
+    grep -i '^[a-z_ ]*(' *.c
+
+    >> Proposed conversion:
+    >>
+    >> int foo(void)
+    >> {
+    >>      /* body here */
+    >> }
+    >
+    >Sometimes it is nice to be able to see function names with a
+    >
+    >   grep '^[a-zA-Z].*(' *.c
+    >
+    >which is why I've always preferred
+    >
+    >int
+    >foo(void)
+    >{
+    >   /* body here */
+    >}
+
+    That makes no sense.
+
+    Do you write your normal variable definitions like
+
+        int
+        a,b,c;
+
+    too? No you don't, because that would be totally idiotic.
+
+    A function declaration is no different. The type of the function is very
+    important to the function itself (along with the arguments), and I
+    personally want to see _all_ of it when I grep for functions.
+
+    You should just do
+
+        grep -i '^[a-z_ ]*(' *.c
+
+    and you'll get a nice function declaration with the standard kernel
+    coding style.
+
+    And I personally don't normally do "grep for random function
+    declarations", that just sounds like a contrived example.  I grep for
+    specific function names to find usage, and then it's _doubly_ important
+    to see that the return (and argument) types match and make sense.
+
+    So I definitely prefer all the arguments on the same line too, even if
+    that makes the line be closer to 100 chars than 80.  The zlib K&R->ANSI
+    conversion was a special case, and I'd be happy if somebody were to have
+    the energy to convert it all the way (which implies moving comments
+    around etc).
+
+
+[*] >   if (tick_init_highres()) {
+    >       local_irq_restore(flags);
+    > -     return;
+    > +     return 0;
+
+    Ohh-oh! This is clearly a failure scenario! And indeed,
+    "tick_init_highres()" will do the "negative on failure, zero on success"
+    thing.
+
+    BUT! That means that you're testing the return value WRONG!
+
+    A function that returns a negative error value should be tested with
+
+        if (tick_init_highres() < 0) {
+            local_irq_restore(flags);
+            return 0;
+        }
+
+
+        Centralized exiting of functions
+
+[*] The goto statement comes in handy when a function exits from multiple
+    locations and some common work such as cleanup has to be done.  If there is
+    no cleanup needed then just return directly.
+
+[*] Choose label names which say what the goto does or why the goto exists.  An
+    example of a good name could be "out_buffer:" if the goto frees "buffer".
+    Avoid using GW-BASIC names like "err1:" and "err2:".  Also don't name them
+    after the goto location like "err_kmalloc_failed:"
+
+    The rationale for using gotos is:
+
+    - unconditional statements are easier to understand and follow
+    - nesting is reduced
+    - errors by not updating individual exit points when making
+        modifications are prevented
+    - saves the compiler work to optimize redundant code away ;)
+
+        int fun(int a)
+        {
+            int result = 0;
+            char *buffer;
+
+            buffer = kmalloc(SIZE, GFP_KERNEL);
+            if (buffer == NULL) {
+                return -ENOMEM;
+            }
+
+            if (condition1) {
+                while (loop1) {
+                    ...
+                }
+                result = 1;
+                goto out_buffer;
+            }
+            ...
+        out_buffer:
+            kfree(buffer);
+            return result;
+        }
+
+[*] A common type of bug to be aware of it "one err bugs" which look like this:
+        err:
+            kfree(foo->bar);
+            kfree(foo);
+            return ret;
+
+    The bug in this code is that on some exit paths "foo" is NULL.  Normally
+    the fix for this is to split it up into two error labels "err_bar:" and
+    "err_foo:".
+
+[*] goto balbel must not indent
+    Lindent is wrong, but the style you are advocating is, at the very
+    least, not universal.  Equally (if not more) common is putting label
+    in column 1, period.  Regardless of indentation level of the statement
+    following it.
+
+    There was a recent discussion on the lkml about the frequent use of "goto"
+    in Linux kernel code. Drawing perhaps on Edsger Dikjstra's 1968 paper titled
+    "Go To Statement Considered Harmful", the argument proposed that using goto
+    will only produce "spaghetti code". A more recent proponent of this theory
+    being Niklaus Wirth who developed Pascal circa 1970 and its successor, Modula-2, in 1979.
+    In the recent thread on the lkml it is made quite clear that the use of goto
+    in Linux kernel code is well thought out and justified. One such explanation
+    can be found within chapter 2 of O'Reilly's excellent book, Linux Device Drivers.
+    It is further explained in the following thread by a number of kernel developers
+    including Robert Love [dead link redacted], Rik van Riel [dead link redacted], and Linux creator Linus Torvalds.
+     From: Rob Wilkens
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 14:34:54 -0500
+
+    Linus,
+
+    I'm REALLY opposed to the use of the word "goto" in any code where it's
+    not needed.  OF course, I'm a linux kernel newbie, so I'm in no position
+    to comment
+
+    Let me comment below the relevant code snippet below as to how I would
+    change it:
+
+    On Sun, 2003-01-12 at 14:15, Linus Torvalds wrote:
+    >       if (spin_trylock(&tty_lock.lock))
+    >           goto got_lock;
+    >       if (tsk == tty_lock.lock_owner) {
+    >           WARN_ON(!tty_lock.lock_count);
+    >           tty_lock.lock_count++;
+    >           return flags;
+    >       }
+    >       spin_lock(&tty_lock.lock);
+    >   got_lock:
+    >       WARN_ON(tty_lock.lock_owner);
+
+
+    I would change it to something like the following (without testing the
+    code through a compiler or anything to see if it's valid):
+
+                if (!(spin_trylock(&tty_lock.lock))){
+                    if (tsk ==tty_lock.lock_owner){
+                        WRAN_ON(!tty_lock.lcok_count);
+                        tty_lock.lock_count++;
+                        return flags;
+                    }
+                }
+                WARN_ON(tty_lock.lock_owner);
+
+
+    Am I wrong that the above would do the same thing without generating the
+    sphagetti code that a goto would give you.  Gotos are BAD, very very
+    bad.  Please note also that the two if statements above could probably
+    even be combined further into one statement by using a short circuit &&
+    in the if.
+
+    If I'm misinterpreting the original code, then forgive me..  I just saw
+    a goto and gasped.  There's always a better option than goto.
+
+    -Rob
+
+
+
+    From: Linus Torvalds
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 11:38:35 -0800 (PST)
+
+    On Sun, 12 Jan 2003, Rob Wilkens wrote:
+    >
+    > I'm REALLY opposed to the use of the word "goto" in any code where it's
+    > not needed.
+
+    I think goto's are fine, and they are often more readable than large
+    amounts of indentation. That's _especially_ true if the code flow isn't
+    actually naturally indented (in this case it is, so I don't think using
+    goto is in any way _clearer_ than not, but in general goto's can be quite
+    good for readability).
+
+    Of course, in stupid languages like Pascal, where labels cannot be
+    descriptive, goto's can be bad. But that's not the fault of the goto,
+    that's the braindamage of the language designer.
+
+            Linus
+
+
+
+    From: Rob Wilkens
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 14:59:57 -0500
+
+    On Sun, 2003-01-12 at 14:38, Linus Torvalds wrote:
+    > I think goto's are fine
+
+    You're a relatively succesful guy, so I guess I shouldn't argue with
+    your style.
+
+    However, I have always been taught, and have always believed that
+    "goto"s are inherently evil.  They are the creators of spaghetti code
+    (you start reading through the code to understand it (months or years
+    after its written), and suddenly you jump to somewhere totally
+    unrelated, and then jump somewhere else backwards, and it all gets ugly
+    quickly).  This makes later debugging of code total hell.
+
+    Would it be so terrible for you to change the code you had there to
+    _not_ use a goto and instead use something similar to what I suggested?
+    Never mind the philosophical arguments, I'm just talking good coding
+    style for a relatively small piece of code.
+
+    If you want, but comments in your code to meaningfully describe what's
+    happening instead of goto labels.
+
+    In general, if you can structure your code properly, you should never
+    need a goto, and if you don't need a goto you shouldn't use it.  It's
+    just "common sense" as I've always been taught.  Unless you're
+    intentionally trying to write code that's harder for others to read.
+
+    -Rob
+
+
+
+    From: Linus Torvalds
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 12:22:26 -0800 (PST)
+
+    On Sun, 12 Jan 2003, Rob Wilkens wrote:
+    >
+    > However, I have always been taught, and have always believed that
+    > "goto"s are inherently evil.  They are the creators of spaghetti code
+
+    No, you've been brainwashed by CS people who thought that Niklaus Wirth
+    actually knew what he was talking about. He didn't. He doesn't have a
+    frigging clue.
+
+    > (you start reading through the code to understand it (months or years
+    > after its written), and suddenly you jump to somewhere totally
+    > unrelated, and then jump somewhere else backwards, and it all gets ugly
+    > quickly).  This makes later debugging of code total hell.
+
+    Any if-statement is a goto. As are all structured loops.
+
+    Ans sometimes structure is good. When it's good, you should use it.
+
+    And sometimes structure is _bad_, and gets into the way, and using a
+    "goto" is just much clearer.
+
+    For example, it is quite common to have conditionals THAT DO NOT NEST.
+
+    In which case you have two possibilities
+
+     - use goto, and be happy, since it doesn't enforce nesting
+
+        This makes the code _more_ readable, since the code just does what
+        the algorithm says it should do.
+
+     - duplicate the code, and rewrite it in a nesting form so that you can
+       use the structured jumps.
+
+        This often makes the code much LESS readable, harder to maintain,
+        and bigger.
+
+    The Pascal language is a prime example of the latter problem. Because it
+    doesn't have a "break" statement, loops in (traditional) Pascal end up
+    often looking like total shit, because you have to add totally arbitrary
+    logic to say "I'm done now".
+
+            Linus
+
+
+
+    From: Robert Love
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   12 Jan 2003 15:33:37 -0500
+
+    On Sun, 2003-01-12 at 15:22, Linus Torvalds wrote:
+
+    > No, you've been brainwashed by CS people who thought that Niklaus
+    > Wirth actually knew what he was talking about. He didn't. He
+    > doesn't have a frigging clue.
+
+    I thought Edsger Dijkstra coined the "gotos are evil" bit in his
+    structured programming push?
+
+    Nonetheless, they would both be wrong...
+
+        Robert Love
+
+
+
+    From: Linus Torvalds
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 12:33:37 -0800 (PST)
+
+    On 12 Jan 2003, Robert Love wrote:
+    > On Sun, 2003-01-12 at 15:22, Linus Torvalds wrote:
+    >
+    > > No, you've been brainwashed by CS people who thought that Niklaus
+    > > Wirth actually knew what he was talking about. He didn't. He
+    > > doesn't have a frigging clue.
+    >
+    > I thought Edsger Dijkstra coined the "gotos are evil" bit in his
+    > structured programming push?
+
+    Yeah, he did, but he's dead, and we shouldn't talk ill of the dead. So
+    these days I can only rant about Niklaus Wirth, who took the "structured
+    programming" thing and enforced it in his languages (Pascal and Modula-2),
+    and thus forced his evil on untold generations of poor CS students who had
+    to learn langauges that weren't actually useful for real work.
+
+    (Yeah, yeah, most _practical_ versions of Pascal ended up having all the
+    stuff necessary to break structure, but as you may be able to tell, I was
+    one of the unwashed masses who had to write in "standard Pascal" in my
+    youth. I'm scarred for life).
+
+                Linus
+
+
+
+    From: Rik van Riel
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 19:29:37 -0200 (BRST)
+
+    On Sun, 12 Jan 2003, Rob Wilkens wrote:
+
+    > However, I have always been taught, and have always believed that
+    > "goto"s are inherently evil.  They are the creators of spaghetti code
+
+    If the main flow of the code is through a bunch of hard to trace
+    gotos and you choose to blame the tool instead of the programmer,
+    I guess you could blame goto.
+
+    However, the goto can also be a great tool to make the code more
+    readable.  The goto statement is, IMHO, one of the more elegant
+    ways to code exceptions into a C function; that is, dealing with
+    error situations that don't happen very often, in such a way that
+    the error handling code doesn't clutter up the main code path.
+
+    As an example, you could look at fs/super.c::do_kern_mount()
+
+            mnt = alloc_vfsmnt(name);
+            if (!mnt)
+                    goto out;
+            sb = type->get_sb(type, flags, name, data);
+            if (IS_ERR(sb))
+                    goto out_mnt;
+
+    Do you see how the absence of the error handling cleanup code
+    makes the normal code path easier to read ?
+
+    regards,
+
+    Rik
+    --
+    Bravely reimplemented by the knights who say "NIH".
+    http://www.surriel.com/     http://guru.conectiva.com/
+    Current spamtrap:  october@surriel.com
+
+
+
+    From: Scott Robert Ladd
+    Subject: RE: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 19:03:10 -0500
+
+    Rob Wilken wrote:
+    > Would it be so terrible for you to change the code you had there to
+    > _not_ use a goto and instead use something similar to what I suggested?
+    > Never mind the philosophical arguments, I'm just talking good coding
+    > style for a relatively small piece of code.
+    >
+    > If you want, but comments in your code to meaningfully describe what's
+    > happening instead of goto labels.
+    >
+    > In general, if you can structure your code properly, you should never
+    > need a goto, and if you don't need a goto you shouldn't use it.  It's
+    > just "common sense" as I've always been taught.  Unless you're
+    > intentionally trying to write code that's harder for others to read.
+
+    I've spent some time looking through the kernel source code, getting a feel
+    for the style and process before attempting to contribute something of my
+    own. In most ways, the quality of Linux code equals or exceeds that of
+    commercial products I've worked on. It may not be perfect, but I'd prefer
+    that the maintainers focus on features and bug fixes, not religious issues.
+
+    Your attitude against "goto" is perhaps based upon an excellent but dated
+    article, "Goto Considered Harmful", written by Edsger W. Dijkstra, and
+    published by the ACM in 1968. (A recent reprint can be found at
+    http://www.acm.org/classics/oct95/.) As you can tell from the date, this
+    article predates modern programming languages and idioms; it comes from a
+    time when Fortran ruled, and before Fortran 77 provided significant tools
+    for avoiding spaghetti code.
+
+    A "goto" is not, in and of itself, dangerous -- it is a language feature,
+    one that directly translates to the jump instructions implemented in machine
+    code. Like pointers, operator overloading, and a host of other "perceived"
+    evils in programming, "goto" is widely hated by those who've been bitten by
+    poor programming. Bad code is the product of bad programmers; in my
+    experience, a poor programmer will write a poor program, regardless of the
+    availability of "goto."
+
+    If you think people can't write spaghetti code in a "goto-less" language, I
+    can send you some *lovely* examples to disabuse you of that notion. ;)
+
+    Used over short distances with well-documented labels, a "goto" can be more
+    effective, faster, and cleaner than a series of complex flags or other
+    constructs. The "goto" may also be safer and more intuitive than the
+    alternative. A "break" is a goto; a "continue" is a "goto" -- these are
+    statements that move the point of execution explicitly.
+
+    That said, I have used exactly two "goto" statements in all the lines of C,
+    C++, Fortran 95, and (yes) COBOL I've written since leaving BASIC and
+    Fortran IV behind. In one case, a single "goto" doubled the speed of a
+    time-critical application; in the other case, "goto" shortens a segment of
+    code by half and makes the algorithm much clearer. I would not use a goto
+    willy-nilly for the fun of it -- unless I was entering an obfuscated code
+    contest ;)
+
+    We keep lowering the bar for technical prowess, it seems; if something has
+    the potential to be used "wrong", high-minded designers remove the offending
+    syntax rather than find or train competent programmers. This is why Java
+    removes pointers (among other things) -- it's not that pointers aren't
+    useful or efficient, it's that they require discipline from programmers.
+
+    Just because something is dogma doesn't mean it is absolute truth. If
+    anything, dogma should be sniffed quite carefully, since it tends to be
+    rather rank if you get close enough. Removing goto is a religious choice,
+    not a technical one.
+
+    I could draw parallels with idiotic laws in general society, but this
+    message is already marginal for this list.
+
+    ..Scott
+
+    --
+    Scott Robert Ladd
+    Coyote Gulch Productions (http://www.coyotegulch.com)
+    Professional programming for science and engineering;
+    Interesting and unusual bits of very free code.
+    - - - - - -
+    From: David Lang
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 17:26:48 -0800 (PST)
+
+    > I've only compiled (and haven't tested this code), but it should be much
+    > faster than the original code.  Why?  Because we're eliminating an extra
+    > "jump" in several places in the code every time open would be called.
+    > Yes, it's more code, so the kernel is a little bigger, but it should be
+    > faster at the same time, and memory should be less of an issue nowadays.
+
+    Rob, one thing you may not have noticed since you haven't been following
+    the list for a while is that with the current generation of computers size
+
+    frequently translates directly into speed and a lot of the time honored
+    performance tricks that trade size for fewer commands executed end up
+    being losses.
+
+    this can be seen by compiling code with -O2 and with -Os and frequently
+    the -Os will actually be faster.
+
+    This is becouse not all memory is equal, main memory is very slow compared
+    to the CPU cache, so code that is slightly larger can cause more cache
+    misses and therefor be slower, even if significantly fewer commands are
+    executed.
+
+    in addition frequently the effect isn't direct (i.e. no noticable
+    difference on the code you are changing, but instead the change makes
+    other code slower as it gets evicted from the cache)
+
+    unfortunantly while this effect is known the rules of when to optimize for
+    space and when to optimize for fewer cpu cycles for code execution are not
+    clear and vary from CPU to CPU frequently within variations of the same
+    family)
+
+    if you google for -Os you should find one of the several discussions on
+    the list in the last year on the subject.
+
+    David Lang
+
+
+
+    From: William Lee Irwin III
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 18:00:18 -0800
+
+    On Sun, Jan 12, 2003 at 05:26:48PM -0800, David Lang wrote:
+    > This is becouse not all memory is equal, main memory is very slow compared
+    > to the CPU cache, so code that is slightly larger can cause more cache
+    > misses and therefor be slower, even if significantly fewer commands are
+    > executed.
+
+    Not all memory is equal here, either i.e. I'm on NUMA boxen.
+
+    Bill
+    - - - - - -
+    From: Oliver Neukum
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 23:06:14 +0100
+
+    > I've only compiled (and haven't tested this code), but it should be much
+    > faster than the original code.  Why?  Because we're eliminating an extra
+    > "jump" in several places in the code every time open would be called.
+    > Yes, it's more code, so the kernel is a little bigger, but it should be
+    > faster at the same time, and memory should be less of an issue nowadays.
+    >
+    > Here's the patch if you want to apply it (i have only compile tested it,
+    > I haven't booted with it).. This patch applied to the 2.5.56 kernel.
+    >
+    > --- open.c.orig   2003-01-12 16:17:01.000000000 -0500
+    > +++ open.c    2003-01-12 16:22:32.000000000 -0500
+    > @@ -100,44 +100,58 @@
+    >
+    >   error = -EINVAL;
+    >   if (length  -       goto out;
+    > +     return error;
+
+    Please don't do such things. The next time locking is changed and a lock
+    is needed here, some poor guy has to go through that and change all
+    back to goto.
+    This may not be applicable here, but as a general rule, don't do it.
+    I speak from experience.
+
+    As for efficiency, that is the compiler's job.
+
+        Regards
+            Oliver
+
+
+
+    From: Rob Wilkens
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   Sun, 12 Jan 2003 17:22:25 -0500
+
+    On Sun, 2003-01-12 at 17:06, Oliver Neukum wrote:
+    > Please don't do such things. The next time locking is changed and a lock
+    > is needed here, some poor guy has to go through that and change all
+    > back to goto.
+    > This may not be applicable here, but as a general rule, don't do it.
+    > I speak from experience.
+    >
+    > As for efficiency, that is the compiler's job.
+
+    I say "please don't use goto" and instead have a "cleanup_lock" function
+    and add that before all the return statements..  It should not be a
+    burden.  Yes, it's asking the developer to work a little harder, but the
+    end result is better code.
+
+    -Rob
+
+
+
+    From: Robert Love
+    Subject: Re: any chance of 2.6.0-test*?
+    Date:   12 Jan 2003 17:58:06 -0500
+
+    On Sun, 2003-01-12 at 17:22, Rob Wilkens wrote:
+
+    > I say "please don't use goto" and instead have a "cleanup_lock" function
+    > and add that before all the return statements..  It should not be a
+    > burden.  Yes, it's asking the developer to work a little harder, but the
+    > end result is better code.
+
+    No, it is gross and it bloats the kernel.  It inlines a bunch of junk
+    for N error paths, as opposed to having the exit code once at the end.
+    Cache footprint is key and you just killed it.
+
+    Nor is it easier to read.
+
+    As a final argument, it does not let us cleanly do the usual stack-esque
+    wind and unwind, i.e.
+
+        do A
+        if (error)
+            goto out_a;
+        do B
+        if (error)
+            goto out_b;
+        do C
+        if (error)
+            goto out_c;
+        goto out;
+        out_c:
+        undo C
+        out_b:
+        undo B:
+        out_a:
+        undo A
+        out:
+        return ret;
+
+    Now stop this.
+
+        Robert Love
+
+
+        Commenting
+
+[*] Comments are good, but there is also a danger of over-commenting.  NEVER
+    try to explain HOW your code works in a comment: it's much better to
+    write the code so that the _working_ is obvious, and it's a waste of
+    time to explain badly written code.
+
+[*] Generally, you want your comments to tell WHAT your code does, not HOW.
+    Also, try to avoid putting comments inside a function body: if the
+    function is so complex that you need to separately comment parts of it,
+    you should probably go back to chapter 6 for a while.  You can make
+    small comments to note or warn about something particularly clever (or
+    ugly), but try to avoid excess.  Instead, put the comments at the head
+    of the function, telling people what it does, and possibly WHY it does
+    it.
+
+
+[*] comments is the C89 "/* ... */" style.
+    Don't use C99-style "// ..." comments.
+
+    The preferred style for long (multi-line) comments is:
+
+    /*
+     * This is the preferred style for multi-line
+     * comments in the Linux kernel source code.
+     * Please use it consistently.
+     *
+     * Description:  A column of asterisks on the left side,
+     * with beginning and ending almost-blank lines.
+     */
+
+
+[*] It's also important to comment data, whether they are basic types or derived
+    types.  To this end, use just one data declaration per line (no commas for
+    multiple data declarations).  This leaves you room for a small comment on each
+    item, explaining its use.
+
+[*] 注释符与注释内容之间要用一个空格进行分隔。
+    /* 注释内容 */
+
+
+        Data structures
+
+[*] Data structures that have visibility outside the single-threaded
+    environment they are created and destroyed in should always have
+    reference counts.  In the kernel, garbage collection doesn't exist (and
+    outside the kernel garbage collection is slow and inefficient), which
+    means that you absolutely _have_ to reference count all your uses.
+
+[*] Reference counting means that you can avoid locking, and allows multiple
+    users to have access to the data structure in parallel - and not having
+    to worry about the structure suddenly going away from under them just
+    because they slept or did something else for a while.
+
+[*] Note that locking is _not_ a replacement for reference counting.
+    Locking is used to keep data structures coherent, while reference
+    counting is a memory management technique.  Usually both are needed, and
+    they are not to be confused with each other.
+
+[*] Many data structures can indeed have two levels of reference counting,
+    when there are users of different "classes".  The subclass count counts
+    the number of subclass users, and decrements the global count just once
+    when the subclass count goes to zero.
+
+    Examples of this kind of "multi-level-reference-counting" can be found in
+    memory management ("struct mm_struct": mm_users and mm_count), and in
+    filesystem code ("struct super_block": s_count and s_active).
+
+[*] Remember: if another thread can find your data structure, and you don't
+    have a reference count on it, you almost certainly have a bug.
+
+
+        Macros, Enums and RTL
+
+[*] Names of macros defining constants and labels in enums are capitalized.
+
+    #define CONSTANT (0x12345)
+
+[*] Enums are preferred when defining several related constants.
+
+[*] Generally, inline functions are preferable to macros resembling functions.
+
+[*] Macros with multiple statements should be enclosed in a do - while block:
+
+    #define macrofun(a, b, c)           \
+        do {                    \
+            if (a == 5) {        \
+                do_this(b, c);      \
+            }  \
+        } while (0)
+
+[*] Things to avoid when using macros:
+
+    1) macros that affect control flow:
+
+    #define FOO(x)                  \
+        do {                    \
+            if (blah(x) < 0) {        \
+                return -EBUGGERED;  \
+            } \
+        } while(0)
+
+    is a _very_ bad idea.  It looks like a function call but exits the "calling"
+    function; don't break the internal parsers of those who will read the code.
+
+    2) macros that depend on having a local variable with a magic name:
+
+    #define FOO(val) bar(index, val)
+
+    might look like a good thing, but it's confusing as hell when one reads the
+    code and it's prone to breakage from seemingly innocent changes.
+
+    3) macros with arguments that are used as l-values: FOO(x) = y; will
+        bite you if somebody e.g. turns FOO into an inline function.
+    4)模拟函数的参数宏的参数禁止直接在宏体内部进行赋值，即尽可能把模拟成函数的参数宏尽可能
+    和函数一样使用，即使修改，也定义成传指针的方式；
+
+    5) forgetting about precedence: macros defining constants using expressions
+        must enclose the expression in parentheses. Beware of similar issues with
+        macros using parameters.
+
+    #define CONSTANT (0x4000)
+    #define CONSTEXP (CONSTANT | 3)
+
+    5) namespace collisions when defining local variables in macros resembling
+    functions:
+
+    #define FOO(x)              \
+    ({                  \
+        typeof(x) ret;          \
+        ret = calc_ret(x);      \
+        (ret);              \
+    })
+
+    ret is a common name for a local variable - __foo_ret is less likely
+    to collide with an existing variable.
+
+[*] 如果enum中两个常量之间有关系一定要体现出来;假设下面例子中的B总是比A大2
+    enum {A = 1, B = 3};应该改成enum {A = 1, B = A + 2,};
+
+[*] 预处理指令不要缩进，从行首开始。即使预处理指令位于缩进代码块中，
+    指令也应从行首开始。
+    // Good - directives at beginning of line
+    if (lopsided_score) {
+#if DISASTER_PENDING // Correct -- Starts at beginning of line
+        DropEverything();
+#endif
+        BackToNormal();
+    }
+
+    // Bad - indented directives
+    if (lopsided_score) {
+        #if DISASTER_PENDING // Wrong! The "#if" should be at beginning of line
+        DropEverything();
+        #endif // Wrong! Do not indent "#endif"
+        BackToNormal();
+    }
+
+#ifdef CONFIG_USB_HIDDEV
+
+#define HIDDEV_FUNCT extern void hiddev_hid_event (struct hid_device *, unsigned int usage,int value);
+
+#else
+
+#define HIDDEV_FUNCT ;
+
+#endif
+
+[*] 宏的实参如果是一个带有副效应的表达式，在实际编程中是一种绝对的禁忌
+    #define ISUPPER(c) ((c)>='A' && (c)<='Z')
+    这段宏的意图是判断c 是否是大写字母。但是在下面代码中这个宏会发生问题：
+    if (ISUPPER (getchar())) {
+        printf("输入的是大写字母\n");
+    } else {
+        printf("输入的是非大写字母\n");
+    }
+    这段代码的本意是输入一个字符，判断输入的字符是否是大写字母。然而，
+    由于ISUPPER ( getchar() ) 在预处理阶段会被展开为
+    ((getchar())>='A' && (getchar())<='Z')，输入一个字符变成了两次读取字符，
+    完全违背了最初的意图。由于这些原因，宏的实参如果是一个带有副效应的表达式，
+    在实际编程中是一种绝对的禁忌。不仅自己定义的宏如此，
+    使用putc()等实际上是用宏实现的“库函数”时也要特别注意这一点。
+
+[*] #define maxint(a,b) \
+       ({int _a = (a), _b = (b); _a > _b ? _a : _b; })
+    gcc的表达式语句完全可以替换掉的do {}while（0）宏定义；
+
+[*] 宏定义要不要加括号什么的，完全是由使用宏的使用角度说的,即从
+    如何使用这个参数决定的，如果允许参数是表达式，则宏定义里面必须加括号；
+    比如字符串拼接，就不可能是表达式，也不允许加括号，所以就没必要；
+
+[*] 参数宏body尽可能每个参数都加上(),整个body尽可能加上();除了##等有些应用场景是
+    不能加的;
+    #define CUBE(a, b) ((a) * (b))
+
+[*] 无参数宏就是不管3721直接把body 进行文本拷贝;带参数宏是先词法分析body,然后
+    把对应的token用使用使用宏的实际参数替换,然后再拷贝过去;
+
+[*] ##如果左右两个token有是宏的话,不进行展开,所以定义的时候最好采用中间再加一个
+    宏的方式,可以先展开这个##中的宏,使得##两边直接面对的的都不是宏;
+
+[*] The reason we always write
+    #define empty_statement do { } while (0)
+
+    instead of
+
+    #define empty_statement /* empty */
+
+
+        The inline disease
+
+    There appears to be a common misperception that gcc has a magic "make me
+    faster" speedup option called "inline". While the use of inlines can be
+    appropriate (for example as a means of replacing macros, see Chapter 12), it
+    very often is not. Abundant use of the inline keyword leads to a much bigger
+    kernel, which in turn slows the system as a whole down, due to a bigger
+    icache footprint for the CPU and simply because there is less memory
+    available for the pagecache. Just think about it; a pagecache miss causes a
+    disk seek, which easily takes 5 milliseconds. There are a LOT of cpu cycles
+    that can go into these 5 milliseconds.
+
+    A reasonable rule of thumb is to not put inline at functions that have more
+    than 3 lines of code in them. An exception to this rule are the cases where
+    a parameter is known to be a compiletime constant, and as a result of this
+    constantness you *know* the compiler will be able to optimize most of your
+    function away at compile time. For a good example of this later case, see
+    the kmalloc() inline function.
+
+    Often people argue that adding inline to functions that are static and used
+    only once is always a win since there is no space tradeoff. While this is
+    technically correct, gcc is capable of inlining these automatically without
+    help, and the maintenance issue of removing the inline when a second user
+    appears outweighs the potential value of the hint that tells gcc to do
+    something it would have done anyway.
+
+
+        Function return values and names
+
+[*] Functions can return values of many different kinds, and one of the
+    most common is a value indicating whether the function succeeded or
+    failed.  Such a value can be represented as an error-code integer
+    (-Exxx = failure, 0 = success) or a "succeeded" boolean (0 = failure,
+    non-zero = success).
+
+    If the name of a function is an action or an imperative command,
+    the function should return an error-code integer.  If the name
+    is a predicate, the function should return a "succeeded" boolean.
+
+For example, "add work" is a command, and the add_work() function returns 0
+for success or -EBUSY for failure.  In the same way, "PCI device present" is
+a predicate, and the pci_dev_present() function returns 1 if it succeeds in
+finding a matching device or 0 if it doesn't.
+
+All EXPORTed functions must respect this convention, and so should all
+public functions.  Private (static) functions need not, but it is
+recommended that they do.
+
+Functions whose return value is the actual result of a computation, rather
+than an indication of whether the computation succeeded, are not subject to
+this rule.  Generally they indicate failure by returning some out-of-range
+result.  Typical examples would be functions that return pointers; they use
+NULL or the ERR_PTR mechanism to report failure.
+
+[*]  1. Makes the new user_mode() return 0 or 1 (same as x86_64)
+
+    I _really_ prefer
+
+    x != 0
+
+    over
+
+    !!x
+
+    since double negation is not only a bad habit in natural languages, it's a
+    bad habit in computer languages too, for exactly the same reason. It's
+    confusing.
+
+    Ask a hundred random C programmers what "!!x" means, versus what "x != 0"
+    means, and time their replies.
+
+    I will bet you $5 USD that even if they all give the right answer (and I
+    suspect you'll get a few wrong answers in there too for the !! case),
+    they'll take a _lot_ longer answering the "!!x" version than they will the
+    "x != 0" question.
+
+    And guess what? That means that the "!!x" version is worse. It means that
+    people don't "see" what it means - they have to think about it. And you
+    shouldn't have to think about something like that, you should write it in
+    the obvious way in the first place.
+
+[*] ALWAYS use "negative means error"
+
+
+     Editor modelines and other cruft
+
+Some editors can interpret configuration information embedded in source files,
+indicated with special markers.  For example, emacs interprets lines marked
+like this:
+
+    -*- mode: c -*-
+
+Or like this:
+
+    /*
+    Local Variables:
+    compile-command: "gcc -DMAGIC_DEBUG_FLAG foo.c"
+    End:
+    */
+
+Vim interprets markers that look like this:
+
+    /* vim:set sw=8 noet */
+
+Do not include any of these in source files.  People have their own personal
+editor configurations, and your source files should not override them.  This
+includes markers for indentation and mode configuration.  People may use their
+own custom mode, or may have some other magic method for making indentation
+work correctly.
+
+
+        Conditional Compilation
+
+[*] Wherever possible, don't use preprocessor conditionals (#if, #ifdef) in .c
+    files; doing so makes code harder to read and logic harder to follow.
+    Instead, use such conditionals in a header file defining functions for use
+    in those .c files, providing no-op stub versions in the #else case,
+    and then call those functions unconditionally from .c files.
+    The compiler will avoid generating any code for the stub calls, producing
+    identical results, but the logic will remain easy to follow.
+
+[*] Prefer to compile out entire functions, rather than portions of functions or
+    portions of expressions.  Rather than putting an ifdef in an expression,
+    factor out part or all of the expression into a separate helper function
+    and apply the conditional to that function.
+
+[*] If you have a function or variable which may potentially go unused in a
+    particular configuration, and the compiler would warn about its definition
+    going unused, mark the definition as __maybe_unused rather than wrapping it
+    in a preprocessor conditional.  (However, if a function or variable *always* goes
+    unused, delete it.)
+
+[*] At the end of any non-trivial #if or #ifdef block (more than a few lines),
+    place a comment after the #endif on the same line, noting the conditional
+    expression used.  For instance:
+
+
+        head file
+
+[*] 禁止复用和标准文件头文件一样的文件名;
+
+[*] Never #include a .c file for any reason!
+
+[*] 所有头文件都应该使用#define 防止头文件被重复包含，命名格式应当是：
+    <PROJECT>_<PATH>_<FILE>_H_，为保证唯一性，头文件的命名应基于其所在项目
+    源代码树的全路径。例如，项目foo 中的头文件foo/src/bar/baz.h 按如下方式保护：
+    #ifndef FOO_BAR_BAZ_H_
+    #define FOO_BAR_BAZ_H_
+    ...
+    #endif
+
+[*] 使用前置声明（forward declarations, python import a name from a module）
+    尽量减少.h 文件中#include 的数量。
+    当一个头文件被包含的同时也引入了一项新的依赖（dependency），只要该头文件被
+    修改，代码就要重新编译。如果你的头文件包含了其他头文件，这些头文件的任何改变
+    也将导致那些包含了你的头文件的代码重新编译。因此，我们宁可尽量少包含头文件，
+    尤其是那些包含在其他头文件中的。使用前置声明可以显著减少需要包含的头文件
+    数量。
+        举例说明：头文件中用到struct File，但不需要访问File 的声明，
+        则头文件中只需前置声明struct File;无需#include
+        "file/base/file.h"。
+    在头文件如何做到使用struct Foo 而无需访问struct的定义？将数据成员类型声明为
+    Foo *。
+    struct X; /* incomplete ("forward") declaration */
+    struct Thing {
+    int i;
+    struct X* x_ptr;
+    };
+
+[*] 头文件中包含头文件次序如
+    （原理，从一般到特殊，即从最不可能变化的头文件到最可能变化的头文件）：
+    C 库
+    其他库的.h、
+    项目内的.h。
+
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include "base/basictypes.h"
+    #include "base/commandlineflags.h"
+
+[*] 项目内头文件应按照项目源代码目录树结构排列，并且避免使用UNIX 文件路径.
+（当前目录）和..（父目录）。例如，google-awesome-project/src/base/logging.h
+    应像这样被包含：
+   #include "base/logging.h"
+
+[*] .c文件中头文件包含顺序：自己模块对应的头文件，c系统文件、其他库文件、
+    本项目内其他头文件；
+   例如foo.c 中包含头文件的次序如下
+   （原理，从一般到特殊，即从最不可能变化的头文件到最可能变化的头文件，
+   同时把自己对应的头文件放在第一个可以检查自己的头文件是否依赖别的头文件）：
+    dir2/foo2.h（优先位置）
+    C 系统文件
+    其他库头文件
+    本项目内头文件
+    举例来说，google-awesome-project/src/foo/internal/fooserver.c 的包含次序如下：
+    #include "foo/public/fooserver.h" // 优先位置
+    #include <sys/types.h>
+    #include <unistd.h>
+    #include "base/basictypes.h"
+    #include "base/commandlineflags.h"
+   #include "foo/public/bar.h"
+
+[*] include a.h 像python import a 模块;
+
+
+                    声明
+[*] 不要对全局声明的顺序做任何的假设;即静态局部或者全局变量都初始化为常量,
+    不要和其他全局变量进行初始化顺序的依赖;
+
+[*] 一行只声明一个变量,
+    Declaring multiple variables in a single declaration could cause confusion
+    about the types of variables and their initial values. In particular,
+    do not declare any of the following in a single declaration:
+        * Variables of different types
+        * A mixture of initialized and uninitialized variables；
+
+[*] 声明引入一个和一个东西bind的自定义token，即标识符；
+
+[*] c作用域都是标识符作用域没有名字空间的作用域；
+
+[*] 不要依赖于静态变量的初始化值，要明确写出它的值，即使使用的是缺省值；
+
+[*] 不要在语句块内声明局部变量,所有变量都是函数级别的，不需要初始化的局部变量
+    就不要初始化；
+
+[*] 局部静态变量和全局变量的唯一区别就是作用域,他们都是在main之前就初始化好了;
+
+[*] sizeof 中struct的定义的声明的结构体都用匿名的，省的迷糊别人以为作用域只是在
+    他们的范围内；其实是和声明的的是同一个名字空间
+
+[*] c声明方式：通过使用方式进行声明；类型 + 生成基本类型的表达式；表达式求值的
+    结果应该是前面的类型，就能推导出name的类型了；由于是表达式所以可以加括号，
+    比如 int a；int (a)一样，只要把结尾的分号以及变量名称去掉就是类型，进行类型
+    转换时，直接加上小括号就ok
+
+[*] 数组的声明大小没必要指定,但是类型一定要清楚,比如二维数组,
+    第一纬度没必要,但是第二纬度是必须的;extern int a[]; extern int b[][10],
+
+[*] 最佳实践是不要声明数组了,直接声明对应首个元素的指针最好了;省的误导;
+    和不要在函数参数里面使用数组一样,不然使用方可能真的觉得是数组,
+    然后采用sizeof这样的运算符;
+
+[*] union初始化默认只能初始化第一个元素，如果想初始化其他元素，则使用指定初始化
+    的形式；
+[*] 结构初始化：
+static const struct file_operations changer_fops = {
+        .owner          = THIS_MODULE,
+        .open           = ch_open,
+        .release        = ch_release,
+        .unlocked_ioctl = ch_ioctl,
+#ifdef CONFIG_COMPAT
+        .compat_ioctl   = ch_ioctl_compat,
+#endif
+        .llseek         = noop_llseek,
+};
+
+[*]数组初始化：
+const char *const btrfs_feature_set_names[3] = {
+        [FEAT_COMPAT]    = "compat",
+        [FEAT_COMPAT_RO] = "compat_ro",
+        [FEAT_INCOMPAT]  = "incompat",
+};
+
+                    表示和转换
+
+[*] 内存表示关注的是占用多大的内存，这些内存是怎么布局的，然后内部是怎么
+    比特编码的，以及内存怎么对齐的；比如struct中间和尾部都可能有pad空间；
+
+[*] 类型转换是指某个类型的值转换为另外一个类型的值，
+    即一个类型的内存表示转换为另外一个类型的内存表示，分为自动转换和强制转换(t)；
+
+[*] 必须以bit级别学习c语言，即c就是一个高级汇编语言，
+    按照汇编语言去学习c（某个类型对象的内存表示，占用多大空间，有效空间有哪些，
+    怎么比特编码的，比特顺序是什么，然后内存是如何对齐的）
+
+[*] 字节序本质上就是数据值得内存表示，本质上是比特序，只不过下层控制器都是至少
+    一个字节进行处理的，所以简化为字节序；
+
+[*] 对象指针和函数指针不一样；
+
+[*] 指针转换成无符号数的规则是把指针的内存表示直接用无符号数进行解析，
+    而整数浮点数转换关注的是值，不是内存表示
+
+[*] 允许的类型转换，即可以通过()进行的转换
+
+
+                表达式
+[*] 不要再sizeof表达式中使用带有副作用的表达式;误导别人, sizeof() 只有可变
+    长度的数组的时候才对表达式进行求值,其余都不计算表达式的值;
+
+[*] v +=e 含义是求值v，求值e，然后求他们两的和，然后赋值给v，
+    并不等价于v = v + e表达式，后面可能有副作用，需要两次对v求值；
+
+[*] NULL一般定义成(void *)0， 虽然可以定义成整数0，但是这样的好处是，(void *)0是
+    个指针类型，整数0，含义就多了，他可以根据上下文，自动转换为一个字符‘\0’，
+    0.0，无效指针等；所以最好明确采用（void *）0表示就是指针，这样用在if语句等
+    地方，编译器可以进行检查是整数还是指针，如果判等的是一个整数，编译器就会
+    报错；其他整数和指针编译器会自动判断的，只有0特殊；
+
+[*] +2 = 0 + 2  –2 = 0 – a 注意会有类型转换的影响，即+2 和2返回的类型可能不一样
+
+[*] 表达式存在的目的是为了表达一个值的计算过程。
+
+[*] 优先级和()只是表达了结合性，没有定义求值顺序;
+
+[*] 只有&& || ?: , 定义了求值顺序
+
+[*] ++a表达式的值是a的值加1，但是a的值什么时候自己更新到加1这个由序列点确定，
+    同理a++的表达式的值是a的值，但是a什么时候更新也是序列点确定的，
+    这种表达式叫做带有副作用的表达式，但是要分清表达式的值和副作用起作用的时候和
+    表达式的值无关
+
+[*] C 语言只保证副作用一定会发生，却不保证会何时发生。
+
+[*] .和->左面可以是右值表达式
+
+[*] 允许同类型的结构体和共用体变量互相赋值
+
+[*] 数组和指针的区别，&和sizeof还有字符串数组初始化“”表示的就是数组本身，
+    其余的像[]都是先求值为指向第一个元素的指针然后进行运算；函数名称除了&和
+    sizeof 之外求值为指向本函数的指针；但是和数组不一样的是，
+    数组不是变成一个数组指针（多维除外）而是hh第一个元素类型的指针，这个和函数不同；
+
+[*] 运算符? :适用于短的表达式，这时它可以把4行的if-else程序变成1行。例如这样：
+    max = (a < b) ? a : b;
+    printf(“the list has %d item%s\n”, n, (n == 1) ? “” : “s”);
+    但是它不应该成为条件语句的一般性替换；？：是表达式，if是语句，结果需要由两个
+    操作数的类型决定，两个操作数分别进行普通一元转换，然后在进行转换成同一类型
+    例如（3） ? 1∶2.
+    不少人以为这个结果是1，但实际上结果为(double)1。这是因为在进行“?:”条件运算时，
+    如果第二个操作数和第三个操作数类型不一致时，存在类型转换，
+    这种转换就如同求表达式“1+2.”的值时所发生的转换一样。
+    因此，“3?1:2.”的真正含义其实是“（3） ? (double)1 : 2.”。
+
+[*] 条件表达式第一个参数必须加括号；
+
+[*] 尽可能用sizeof(varname)代替sizeof(type)。
+    使用sizeof(varname)是因为当变量类型改变时代码自动同步，
+    有些情况下sizeof(type)或许有意义，还是要尽量避免，如果变量类型改变的话不能同步。
+    SOMETYPE *p = OPENSSL_malloc(sizeof(*p) * num_of_elements);
+
+[*] C 语言中，当表达式的值没有使用时，传统的做法是使用后置自增，特别是在for循环中，
+    有些人觉得后置自增更加易懂，因为这很像自然语言，主语（i）在谓语动词（++）前。
+
+[*] 在表达式中使用括号，使表达式的运算顺序更清晰。
+
+[*] 避免表达式中的附加功能，不要编写太复杂的复合表达式;
+
+[*] 条件判断表达式中禁止出现’=’;
+    if ((*dst++ = *src++) != ‘\0’) {
+    }
+
+[*] 少用含有否定的表达式;
+    反例:
+    if (!(start > a) || !(start <= b))
+    正例：
+    if ((start <= a) || (start > b))
+
+[*] 在条件判断表达式中，当整型变量与0 比较时，不可模仿布尔变量的风格，
+    应当将整型变量用“==”或“!=”直接与0比较。
+    正例：
+    if (a == 0)
+    if (a != 0)
+    反例：
+    // 会让人误解a是布尔变量
+    if (!a)
+    if (a)
+
+[*] 不可将浮点变量用“==”或“!=”与任何数字比较。
+    无论是float还是double类型的变量，都有精度限制。所以一定要避免将浮点变量
+    用“==”或“!=”与数字比较，应该转化成“>=”或“<=”形式。
+    正例：
+    if ((fResult >= -EPSINON) && (fResult <= EPSINON))
+    反例：
+    if (fResult == 0.0)  // 隐含错误的比较
+    其中EPSINON是允许的误差（即精度）
+
+[*] 应当将指针变量用“==”或“!=”与NULL比较。
+    说明：指针变量的零值是“空”（记为NULL），即使NULL的值与0相同，但是两者意义不同。
+    正例：
+    // p与NULL显式比较，强调p是指针变量
+    if (p == NULL)
+    if (p != NULL)
+    反例：
+    // 容易让人误解是整型变量
+    if (p == 0)
+    if (p != 0)
+    或者
+    // 容易让人误解p是布尔变量
+        if (!p)
+        if (p)
+
+[*] 常量表达式可以用来做静态断言
+    /* Force a compilation error if condition is true, but also produce a
+   result (of value 0 and type size_t), so the expression can be used
+   e.g. in a structure initializer (or where-ever else comma expressions
+   aren't permitted). */
+#define BUILD_BUG_ON_ZERO(e) (sizeof(struct { int:-!!(e); }))
+#define BUILD_BUG_ON_NULL(e) ((void *)sizeof(struct { int:-!!(e); }))
+   This is, in effect, a way to check whether the expression e can be evaluated to be 0, and if not, to fail the build.
+
+The macro is somewhat misnamed; it should be something more like BUILD_BUG_OR_ZERO, rather than ...ON_ZERO. (There have been occasional discussions about whether this is a confusing name.)
+
+You should read the expression like this:
+
+sizeof(struct { int: -!!(e); }))
+(e): Compute expression e.
+
+!!(e): Logically negate twice: 0 if e == 0; otherwise 1.
+
+-!!(e): Numerically negate: 0 if e == 0; otherwise -1.
+
+struct{int: -!!(0);} --> struct{int: 0;}: If it was zero, then we declare a struct with an anonymous integer bitfield that has width zero. Everything is fine and we proceed as normal.
+
+struct{int: -!!(1);} --> struct{int: -1;}: On the other hand, if it isn't zero, then it will be some negative number. Declaring any bitfield with negative width is a compilation error.
+
+So we'll either wind up with a bitfield that has width 0 in a struct, which is fine, or a bitfield with negative width, which is a compilation error. Then we take sizeof that field, so we get a size_t with the appropriate width (which will be zero in the case where e is zero)
+
+[*] What's the best way to suppress "unused parameter" warning in C code
+I usually write a macro like this:
+
+#define UNUSED(x) (void)(x)
+You can use this macro for all your unused parameters. (Note that this works on any compiler.)
+
+For example:
+
+void f(int x) {
+    UNUSED(x);
+    ...
+}
+
+                    语句
+
+[*] ‘;’不是c语言的语句分隔符，是某些语句的组成部分;
+
+[*] ‘=’是一个运算符,有返回值;
+
+[*] 表达式语句就是表达式加’;’构成,求值这个表达式,然后把最终的值扔掉;
+
+[*] 复合语句语法上等价于单条语句，它可以出现在任何单条语句可以出现的位置；
+
+[*] 一条语句只完成一个功能。
+
+[*] 不要把多个语句放在一行里，除非你有什么东西要隐藏：
+    if (condition) {do_this;}
+    do_something_everytime;
+
+[*] 不要在一行里放多个赋值语句。代码风格要超级简单。就是避免可能导致别人误读的
+    表达式。
+
+[*] 不可在for 循环体内修改循环变量，防止for 循环失去控制。
+
+[*] do while语句和while语句仅使用一个条件。
+说明：保持程序简洁。如果需要判断的条件较多，建议用临时布尔变量或者函数先计算是否满足条件
+
+[*] 如果循环体内存在逻辑判断，并且循环次数很大，宜将逻辑判断移到循环体的外面。
+    说明：下面两个示例中，反例比正例多执行了NUM -1次逻辑判断。并且由于前者总要进行
+    逻辑判断，使得编译器不能对循环进行优化处理，降低了效率。如果NUM非常大，
+    最好采用正例的写法，可以提高效率。
+    const int NUM = 100000;
+    if (is_true) {
+        for (i = 0; i < NUM; i++) {
+            do_something();
+    }
+    } else {
+        for (i = 0; i < NUM; i++) {
+            do_otherthing();
+    }
+    }
+    反例:
+    for (i = 0; i < NUM; i++) {
+        if (is_true) {
+            do_something();
+        } else {
+            do_otherthing();
+    }
+
+[*] switch的case和switch对齐,对于某个label有语句而且和相邻的label没有break需要
+添加注释,如果没有语句则不需要添加注释;而且必须带default,且放在最后并且也带break;
+    switch (suffix) {
+    case 'G': /*不需要添加注释*/
+    case 'g':
+        mem <<= 30;
+        break;
+    case 'M':
+    case 'm':
+        mem <<= 20;
+        break;
+    case 'K':
+    case 'k':
+        mem <<= 10;
+        /* fall through */
+    default:
+        break;
+    }
+
+                    stdlib
+
+[*] 尽量使用memmove()代替memcpy()
+
+[*] calloc()函数分配的空间有个重要的性质是这个空间中的内存单元都被按位初始化为
+    0。应该注意的是，这并不一定意味着可以自动得到初值为0.0 的浮点数据以及初值
+    为NULL 的指针
+
+[*] 使用free()函数必须小心，不能多次释放同一块内存，否则是一种未定义行为
+
+
+                    Scope rules in C
+
+[*] c的名字作用域分为global和块级别的；全局的又分为文件级别的和程序级别的；
+
+[*] 控制结构中的{} 也是引入一个scope，但是坚决禁止在控制结构中引入声明,除非是macro；
+
+[*] 词法和语法分析称为编译器的前段，把程序的语义翻译成对应目标机的东西叫做
+    编译器的后端；
+
+[*] 寻址和对象的name不是一个层面上的东西，name说的是绑定关系，寻址或者地址说的是
+    实现方式；所以c里面的指针作用就是动态建立name和对象的绑定关系；
+
+[*] 语义分析和检查分为静态语义检查和动态语义检查；c就是输入静态检查比较弱，
+    然后完全没有运行时的检查，完全为了效率原因；
+
+[*] c里面的语句表达式完美，解决了表达式中不能是语句的问题；
+
+[*] c对泛型的支持，通过typeof实现，一定注意命名规则问题，因为宏是破坏名字空间的，
+    即使用红的地方都会根据用户的使用引入（拷贝）过来很多名字，可能是使用宏的
+    上下文里面的名字重叠；所以宏不是什么好东西；
+
+[*] 值和对象区别，值相当于立即数，对象需要一次动态的寻址才能获取到值，
+    值-》对象-》指针间接引用，灵活性越来越高，但是效率越来越低；一个不用寻址，
+    一个需要直接寻址，一个需要多次间接寻址；值一定也有类型的、从cpu角度考虑
+    更合适，就是cpu拿到数据之后，放到寄存器里面，没有ram和他对应，值要么绑定到
+    指令中，要么就是cpu在计算过程中生成的临时放在寄存器中的东西，反正不会在ram
+    中，至少概念上是这样的；
+
+[*] 所谓的静态类型指的是一个名字在同一个作用域呢只能绑定某一个类型的对象；
+    变量的bind就是变量的name和某个类型的对象进行了绑定；
+
+[*] 函数传参数都可以认为是动态的name和对象binding
+
+[*] c的执行顺序：三个层面：第一个是c源码顺序；2是编译器生成之后的机器码顺序；
+    3是机器的执行顺序；对于单核可以不考虑3，单核保证3和2的结果是一致的；但是1和2
+    有可能不一样；多核并不保证编译器生成的机器指令顺序是一致的，需要使用手动使用
+    内存屏障来显示控制；
+
+[*] 一定要主要编译器优化的考虑；比如volatile的使用；因为编译器在优化的时候总是
+    认为是单线程的；如果在两个指令之间没有写，那他就认为数据是一样的(这个和
+    编译器优化的级别没有关系，即是否是按照objfile级别进行优化还是按照function进行
+    优化，核心是编译器认为是单线程执行的，即只要在个单线程控制流之间有两个读，
+    中间没有写，则就可以进行假设采用缓存中的值)，直接采用cache中或者register中的
+    缓存值，volatile就是说有不可控制因素可能改变这个值，让编译器不要做这个假设
+    进行优化；
+
+[*] 两个volatile之间是保证顺序的，即源码顺序和机器码顺序是一致的；
+
+[*] 一定要以实际的执行顺序考虑问题；
+
+[*] Why the "volatile" type class should not be used
+    ------------------------------------------------
+    C programmers have often taken volatile to mean that the variable could be
+    changed outside of the current thread of execution; as a result, they are
+    sometimes tempted to use it in kernel code when shared data structures are
+    being used.  In other words, they have been known to treat volatile types
+    as a sort of easy atomic variable, which they are not.  The use of volatile in
+    kernel code is almost never correct; this document describes why.
+
+    The key point to understand with regard to volatile is that its purpose is
+    to suppress optimization, which is almost never what one really wants to
+    do.  In the kernel, one must protect shared data structures against
+    unwanted concurrent access, which is very much a different task.  The
+    process of protecting against unwanted concurrency will also avoid almost
+    all optimization-related problems in a more efficient way.
+
+    Like volatile, the kernel primitives which make concurrent access to data
+    safe (spinlocks, mutexes, memory barriers, etc.) are designed to prevent
+    unwanted optimization.  If they are being used properly, there will be no
+    need to use volatile as well.  If volatile is still necessary, there is
+    almost certainly a bug in the code somewhere.  In properly-written kernel
+    code, volatile can only serve to slow things down.
+
+    Consider a typical block of kernel code:
+
+        spin_lock(&the_lock);
+        do_something_on(&shared_data);
+        do_something_else_with(&shared_data);
+        spin_unlock(&the_lock);
+
+    If all the code follows the locking rules, the value of shared_data cannot
+    change unexpectedly while the_lock is held.  Any other code which might
+    want to play with that data will be waiting on the lock.  The spinlock
+    primitives act as memory barriers - they are explicitly written to do so -
+    meaning that data accesses will not be optimized across them.  So the
+    compiler might think it knows what will be in shared_data, but the
+    spin_lock() call, since it acts as a memory barrier, will force it to
+    forget anything it knows.  There will be no optimization problems with
+    accesses to that data.
+
+    If shared_data were declared volatile, the locking would still be
+    necessary.  But the compiler would also be prevented from optimizing access
+    to shared_data _within_ the critical section, when we know that nobody else
+    can be working with it.  While the lock is held, shared_data is not
+    volatile.  When dealing with shared data, proper locking makes volatile
+    unnecessary - and potentially harmful.
+
+    The volatile storage class was originally meant for memory-mapped I/O
+    registers.  Within the kernel, register accesses, too, should be protected
+    by locks, but one also does not want the compiler "optimizing" register
+    accesses within a critical section.  But, within the kernel, I/O memory
+    accesses are always done through accessor functions; accessing I/O memory
+    directly through pointers is frowned upon and does not work on all
+    architectures.  Those accessors are written to prevent unwanted
+    optimization, so, once again, volatile is unnecessary.
+
+    Another situation where one might be tempted to use volatile is
+    when the processor is busy-waiting on the value of a variable.  The right
+    way to perform a busy wait is:
+
+        while (my_variable != what_i_want)
+            cpu_relax();
+
+    The cpu_relax() call can lower CPU power consumption or yield to a
+    hyperthreaded twin processor; it also happens to serve as a compiler
+    barrier, so, once again, volatile is unnecessary.  Of course, busy-
+    waiting is generally an anti-social act to begin with.
+
+    There are still a few rare situations where volatile makes sense in the
+    kernel:
+
+    - The above-mentioned accessor functions might use volatile on
+        architectures where direct I/O memory access does work.  Essentially,
+        each accessor call becomes a little critical section on its own and
+        ensures that the access happens as expected by the programmer.
+
+    - Inline assembly code which changes memory, but which has no other
+        visible side effects, risks being deleted by GCC.  Adding the volatile
+        keyword to asm statements will prevent this removal.
+
+    - The jiffies variable is special in that it can have a different value
+        every time it is referenced, but it can be read without any special
+        locking.  So jiffies can be volatile, but the addition of other
+        variables of this type is strongly frowned upon.  Jiffies is considered
+        to be a "stupid legacy" issue (Linus's words) in this regard; fixing it
+        would be more trouble than it is worth.
+
+    - Pointers to data structures in coherent memory which might be modified
+        by I/O devices can, sometimes, legitimately be volatile.  A ring buffer
+        used by a network adapter, where that adapter changes pointers to
+        indicate which descriptors have been processed, is an example of this
+        type of situation.
+
+    For most code, none of the above justifications for volatile apply.  As a
+    result, the use of volatile is likely to be seen as a bug and will bring
+    additional scrutiny to the code.  Developers who are tempted to use
+    volatile should take a step back and think about what they are truly trying
+    to accomplish.
+
+    Patches to remove volatile variables are generally welcome - as long as
+    they come with a justification which shows that the concurrency issues have
+    been properly thought through.
+
+      toools
+    checkpatch.pl帮助信息
+    位于Linux内核树scripts/
+    可以自动修复代码中的问题
+    如果使用 --fix-inplace 选项记得备份
+    ./checkpatch.pl -h              # 查看帮助信息
+    Usage: checkpatch.pl [OPTION]... [FILE]...
+    Version: 0.32
+    Options:
+    --no-tree             run without a kernel tree
+    --no-signoff          not check 'Signed-off-by' line
+    --terse               one line per report
+    -f, --file            treat FILE as regular file
+    --fix                 may create horrible results
+    --fix-inplace         may create horrible results
+
+# 对当前目录下所有源代码检查风格
+    find -name "*.[ch]" | xargs -n 1 ./checkpatch.pl --no-tree -f
+# 对当前目录下所有源代码修正风格
+    find -name "*.[ch]" | xargs -n 1 ./checkpatch.pl --no-tree -f \
+    --fix-inplace
+# 对所有补丁检查风格
+    ./checkpatch.pl --no-tree *.patch
+# 对所有补丁修正风格
+    ./checkpatch.pl --no-tree --fix-inplace *.patch
+
+
+    Lindent基本用法
+    位于Linux内核树scripts/
+    自动修正代码中的缩进
+    不要完全信赖该脚本，修正完成之后最好检查一下
+    ./Lindent <filename>
+
+
+    静态检查工具
+    静态分析工具在代码通过编译之后再对代码进行分析
+    相比编译器，对代码进行了更加严格的检查
+    编译器负责把C源程序快速、高效地转变为可执行文件
+    检查工具则可以花更多时间对代码进行更深入仔细的检查
+    数组越界访问
+    未定义变量使用、空指针提取
+    内存泄漏
+    使用不当的类型转换
+
+    下载安装sparse
+    sparse是Linus针对Linux内核写的静态检查脚本
+    sudo apt-get install sparse     # 使用源下载并安装
+# 从网站抓取最新源码包
+    wget http://codemonkey.org.uk/projects/git-snapshots/\
+    sparse/sparse-latest.tar.xz
+# 使用git获取最新源码包，推荐使用该方式
+    git clone http://git.kernel.org/pub/scm/devel/sparse/sparse.git
+    make && make install            # 默认安装到$(HOME)/bin
+# 设置搜索路径
+    echo 'export PATH=$PATH:$HOME/bin/' >> ~/.bashrc
+    which sparse                    # 查看sparse是否成功安装
+
+    sparse日常用法
+    man sparse
+    sparse [WARNING OPTIONS]... file.c
+    -Wsparse-all          打开所有选项
+    make C=2                        # C=1仅检查要编译的C文件
+    make C=2 CF="-D__CHECK_ENDIAN__"
+# Linux Makefile默认检查标志
+    CHECKFLAGS := -D__linux__ -Dlinux -D__STDC__ \
+                -Dunix -D__unix__ \
+                -Wbitwise -Wno-return-void $(CF)
+
+    sparse context checking
+    详细说明请参考Sparse "context" checking
+    静态上下文计数，用于检查lock和unlock配对。
+    在编译时看到lock就加1，看到unlock就减1。但是如果遇到如下代码就不知所措了。
+    int fn(arg)
+    {
+            if (arg)
+                    spin_lock(lock);
+
+            if (arg)
+                    spin_unlock(lock);
+    }
+
+    sparse context checking
+    sparse只能局部确定，也就是说如果在一个函数获取锁，在另一个函数释放，你就需要告知sparse。
+    通过在函数声明和定义的头部加上 __acquires 和 __release 来告知sparse。
+    static void *locks_start(struct seq_file *f, loff_t *pos)
+            __acquires(&blocked_lock_lock)
+    {
+            struct locks_iterator *iter = f->private;
+
+            spin_lock(&blocked_lock_lock);
+            return seq_hlist_start_percpu(iter);
+    }
+
+    static void locks_stop(struct seq_file *f, void *v)
+            __releases(&blocked_lock_lock)
+    {
+            spin_unlock(&blocked_lock_lock);
+            lg_global_unlock(&file_lock_lglock);
+    }
+
+
+2.3 Search Path
+
+By default, the preprocessor looks for header files included by the quote form
+of the directive #include "file" first relative to the directory of the current file,
+and then in a preconfigured list of standard system directories.
+For example, if /usr/include/sys/stat.h contains #include "types.h",
+GCC looks for types.h first in /usr/include/sys, then in its usual search path.
+
+For the angle-bracket form #include <file>, the preprocessor’s default behavior is
+to look only in the standard system directories.
+The exact search directory list depends on the target system,
+how GCC is configured, and where it is installed.
+You can find the default search directory list for your version of CPP by invoking it with the -v option. For example,
+
+cpp -v /dev/null -o /dev/null
+There are a number of command-line options you can use to add additional directories to the search path.
+The most commonly-used option is -Idir, which causes dir to be searched
+after the current directory (for the quote form of the directive) and
+ahead of the standard system directories.
+You can specify multiple -I options on the command line, in which case the directories are searched in left-to-right order.
+
+If you need separate control over the search paths for the quote and angle-bracket forms of the ‘#include’ directive,
+you can use the -iquote and/or -isystem options instead of -I. See Invocation, for a detailed description of these options, as well as others that are less generally useful.
+
+If you specify other options on the command line, such as -I,
+that affect where the preprocessor searches for header files,
+the directory list printed by the -v option reflects the actual search path used by the preprocessor.
+
+Note that you can also prevent the preprocessor from searching any of the default system header directories with the -nostdinc option.
+This is useful when you are compiling an operating system kernel or some other program that does not use the standard C library facilities, or the standard C library itself.
