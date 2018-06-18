@@ -147,9 +147,7 @@ cmap W w !sudo tee % >/dev/null
 autocmd FileType python set tabstop=4 | set shiftwidth=4 | set softtabstop=4 | set expandtab | set autoindent
 au FileType c,cpp  setl cindent cinoptions+=:0
 
-let g:solarized_termtrans=1
-let g:solarized_contrast="normal"
-let g:solarized_visibility="normal"
+"let g:solarized_termcolors = 256
 
 "airline
 let g:airline_theme = 'solarized'
