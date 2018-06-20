@@ -16,8 +16,6 @@ new_ycm_conf() {
 			filelist=$(find $prj_dir | grep -E "^.*\.h$")
 			for file in ${filelist}
 			do
-				echo $file
-				echo '*'
 				echo "    '-I'," >> ${target}
 				echo "    '$(dirname "${file}")', " >> ${target}
 			done
