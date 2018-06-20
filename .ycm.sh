@@ -1,35 +1,47 @@
 #!/bin/bash
 
-TMP=.tmp
+
 prj_dir=$(cd `dirname $0`; pwd)
-filelist=$(find $prj_dir | grep -E "^.*\.h$")
-for file in ${filelist}
-do
-	echo $(dirname "${file}") >> ${TMP}
-done
+new_ycm_conf() {
+	filelist=$(find $prj_dir | grep -E "^.*\.h$")
+	target="$prj_dir/.ycm_extra_conf.py"
+	echo -n > ${target}
+	tmp="$prj_dir/.ycm_extra_conf.tmp"
+	ifs=$IFS
+	IFS=
+	cat ${tmp} | while read line
+	do
+		if [[ $(echo $line | xargs) == ']' ]]; then
+			IFS=$ifs
+			filelist=$(find $prj_dir | grep -E "^.*\.h$")
+			for file in ${filelist}
+			do
+				echo $file
+				echo '*'
+				echo "    '-I'," >> ${target}
+				echo "    '$(dirname "${file}")', " >> ${target}
+			done
+			echo "$line" >> ${target}
+			ifs=$IFS
+			IFS=
+		else
+			echo "$line" >> ${target}
+		fi
+	done
+	IFS=$ifs
+}
 
-TARGET="$prj_dir/.ycm_extra_conf.py"
-YCMPY1="$prj_dir/.ycm_extra_conf.beg"
-YCMPY2="$prj_dir/.ycm_extra_conf.end"
-cat ${YCMPY1} > ${TARGET}
-DIR=$(cat ${TMP} | sort -u)
-for i in ${DIR}
-do
-	echo "'-I'," >> ${TARGET}
-	echo "'${i}'," >> ${TARGET}
-done
-cat ${YCMPY2} >> ${TARGET}
+new_indexer_tag() {
+	index=~/.indexer_files
+	prj_name=$(basename ${prj_dir})
+	$(grep ${prj_name} ${index} -q)
+	if [ $? -ne 0 ]
+	then
+		echo "" >> ${index}
+		echo "[${prj_name}]">> ${index}
+		echo ${prj_dir} >> ${index}
+	fi
+}
+new_ycm_conf
+new_indexer_tag
 
-rm -rf ${TMP}
-
-INDEX=/home/zb/.indexer_files
-prj_name=$(basename ${prj_dir})
-$(grep ${prj_name} ${INDEX} -q)
-if [ $? -eq 0 ]
-then
-	echo "already added in ${INDEX}"
-else
-	echo "" >> ${INDEX}
-	echo "[${prj_name}]">> ${INDEX}
-	echo ${prj_dir} >> ${INDEX}
-fi
