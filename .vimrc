@@ -32,7 +32,6 @@ call plug#end()
 nnoremap <Leader>a :CtrlSF<CR>
 nnoremap <Leader>r :CtrlSF<Space>-R<Space>
 let g:ctrlsf_ackprg = 'rg'
-let g:ctrlsf_default_root = 'project'
 
 "indexer
 let g:rndexer_ctagsCommandLineOptions="--c-kinds=+p+l+x+c+d+e+f+g+m+n+s+t+u+v --fields=+iaSl --extra=+q"
