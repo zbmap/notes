@@ -120,7 +120,6 @@ set splitbelow
 set splitright
 set visualbell
 set noerrorbells
-set scrolloff=3
 set vb t_vb= 
 filetype on 
 filetype indent on
