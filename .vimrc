@@ -125,7 +125,7 @@ filetype on
 filetype indent on
 filetype plugin on
 set cursorline
-hi MatchParen ctermbg=NONE
+"hi MatchParen ctermbg=NONE
 noremap m %
 cnoremap <c-a> <Home>
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
