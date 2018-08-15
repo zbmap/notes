@@ -142,6 +142,16 @@ autocmd! bufwritepost .vimrc source %
 vnoremap * y/<C-r>0<CR>
 vnoremap # y?<C-r>0<CR>
 
+noremap * *zz
+noremap # #zz
+noremap <c-o> <c-o>zz
+noremap <c-i> <c-i>zz
+"noremap n nzz
+"noremap <s-n> <s-n>zz
+"noremap j gjzz
+"noremap k gkzz
+
+
 cmap W w !sudo tee % >/dev/null
 autocmd FileType python set tabstop=4 | set shiftwidth=4 | set softtabstop=4 | set expandtab | set autoindent
 au FileType c,cpp  setl cindent cinoptions+=:0
