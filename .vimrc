@@ -29,6 +29,10 @@ Plug 'Shougo/echodoc.vim'
 call plug#end()
 
 "ctrlsf
+let g:ctrlsf_case_sensitive='yes'
+let g:ctrlsf_auto_focus = {
+    \ "at": "start"
+    \ }
 nnoremap <Leader>a :CtrlSF<CR>
 nnoremap <Leader>r :CtrlSF<Space>-R<Space>
 let g:ctrlsf_ackprg = 'rg'
