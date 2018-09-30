@@ -3,7 +3,6 @@
 
 prj_dir=$(cd `dirname $0`; pwd)
 new_ycm_conf() {
-	filelist=$(find $prj_dir | grep -E "^.*\.h$")
 	target="$prj_dir/.ycm_extra_conf.py"
 	echo -n > ${target}
 	tmp="$prj_dir/.ycm_extra_conf.tmp"
@@ -12,12 +11,16 @@ new_ycm_conf() {
 	cat ${tmp} | while read line
 	do
 		if [[ $(echo $line | xargs) == ']' ]]; then
+			dir=""
 			IFS=$ifs
-			filelist=$(find $prj_dir | grep -E "^.*\.h$")
+			filelist=$(find $prj_dir | grep -E "^.*\.h$" | sort)
 			for file in ${filelist}
 			do
-				echo "    '-I'," >> ${target}
-				echo "    '$(dirname "${file}")', " >> ${target}
+				if [[ $(dirname "${file}") != $dir ]]; then
+				    echo "    '-I'," >> ${target}
+				    echo "    '$(dirname "${file}")', " >> ${target}
+				    dir=$(dirname "${file}")
+				fi
 			done
 			echo "$line" >> ${target}
 			ifs=$IFS
