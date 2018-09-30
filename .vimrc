@@ -209,6 +209,15 @@ noremap <c-i> <c-i>zz
 "noremap j gjzz
 "noremap k gkzz
 
+function! s:insert_gates()
+  let gatename = substitute(toupper(expand("%")), "\\.", "_", "g")
+  let gatename = substitute(gatename, "\\/", "_", "g")
+  execute "normal! i#ifndef " . gatename
+  execute "normal! o#define " . gatename . " "
+  execute "normal! Go#endif " 
+  normal! k
+endfunction
+autocmd BufNewFile *.{h,hpp} call <SID>insert_gates()
 
 cmap W w !sudo tee % >/dev/null
 autocmd FileType python set tabstop=4 | set shiftwidth=4 | set softtabstop=4 | set expandtab | set autoindent
