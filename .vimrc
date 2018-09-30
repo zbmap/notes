@@ -192,10 +192,6 @@ noremap m %
 cnoremap <c-a> <Home>
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 nnoremap <silent> <backspace> :nohl<cr>
-nnoremap lb ^
-nnoremap le $
-nnoremap lh 0
-nnoremap lt g_
 noremap Y y$
 map <leader>v :e! ~/.vimrc<cr>
 autocmd! bufwritepost .vimrc source %
@@ -216,7 +212,7 @@ noremap <c-i> <c-i>zz
 
 cmap W w !sudo tee % >/dev/null
 autocmd FileType python set tabstop=4 | set shiftwidth=4 | set softtabstop=4 | set expandtab | set autoindent
-au FileType c,cpp  setl cindent cinoptions+=:0
+au FileType c,cpp  setl cindent cinoptions+=:0,(0
 
 "let g:solarized_termcolors = 256
 
