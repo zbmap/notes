@@ -189,7 +189,8 @@ filetype plugin on
 set cursorline
 "hi MatchParen ctermbg=NONE
 noremap m %
-cnoremap <c-a> <Home>
+map <c-a> <Home>
+map <c-e> <End>
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 nnoremap <silent> <backspace> :nohl<cr>
 noremap Y y$
@@ -200,6 +201,9 @@ autocmd! bufwritepost .vimrc source %
 vnoremap * y/<C-r>0<CR>
 vnoremap # y?<C-r>0<CR>
 
+noremap lb ^
+noremap le $
+
 noremap * *zz
 noremap # #zz
 noremap <c-o> <c-o>zz
@@ -209,19 +213,24 @@ noremap <c-i> <c-i>zz
 "noremap j gjzz
 "noremap k gkzz
 
+augroup strip_traling_spaces
+    autocmd!
+    autocmd BufWritePre *.py,*.h,*.c %s/\s\+$//e
+augroup END
+
 function! s:insert_gates()
   let gatename = substitute(toupper(expand("%")), "\\.", "_", "g")
   let gatename = substitute(gatename, "\\/", "_", "g")
   execute "normal! i#ifndef " . gatename
-  execute "normal! o#define " . gatename . " "
-  execute "normal! Go#endif " 
+  execute "normal! o#define " . gatename . ""
+  execute "normal! Go#endif" 
   normal! k
 endfunction
 autocmd BufNewFile *.{h,hpp} call <SID>insert_gates()
 
 cmap W w !sudo tee % >/dev/null
 autocmd FileType python set tabstop=4 | set shiftwidth=4 | set softtabstop=4 | set expandtab | set autoindent
-au FileType c,cpp  setl cindent cinoptions+=:0,(0
+au FileType c,cpp  setl cindent cinoptions+=:0
 
 "let g:solarized_termcolors = 256
 
