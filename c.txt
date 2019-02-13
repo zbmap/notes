@@ -1900,3 +1900,85 @@ Note that you can also prevent the preprocessor from searching any of the
 default system header directories with the -nostdinc option. This is useful 
 when you are compiling an operating system kernel or some other program that 
 does not use the standard C library facilities, or the standard C library itself.
+
+new skill: 
+* += 符合运算符考虑方式和++ — 一样进行考虑；都是自***，前面是主语后面是宾语；例如，减去2，i增加2， i左移2比特，i和0xaa 与；
+* 指针和数组的关系： 指针很多运算例如算数运算什么的，都是数组的index；不是一个简单整数，即使是diff p1 - p2 也是index；p1 - p2 = index;  p1 = p2 + index;所以是index； p +i  p 指向index0 的话，结果就是ith元素的地址；
+*  数组index 大于等于0； 指针的这个index 可以是负整数； 即数组和指针只是有一部分交集而已；数组也有的地方是指针不具备的，比如sizeof 数组名什么的；指针这种操作都是线性地址空间；
+*  指针也和struct union 有关系，都是offset方式进行访问；struct 本身也定义了一个线性地址空间；
+*   Because pointers in BCPL and B are merely integer indices in the memory array, arithmetic on them is meaningful: if p is the address of a cell, then p+1 is the address of the next cell. 
+
+*  typedef 只是是一个别名，编译器其实是知道什么类型的；typedef 和#define 有点像，但是由于是预处理器和编译器分别处理的，所以有区别； typedef char *String;   String p, lineptr[MAXLINES], alloc(int); 
+*   对于编译器：等效于：char *p, *lineptr[MAXLINES], *alloc(int);
+*    #define String  char*;   String p, lineptr[MAXLINES], alloc(int);  等效于  char *p, lineptr[MAXLINES], alloc(int); 
+* macro： include  object-like  function-like    stringizing 参数， concatanation 参数；
+
+
+*        ==      equal to (.EQ. to Fortraners)
+*        !=      not equal to
+*        >       greater than
+*        <       less than
+*        >=      greater than or equal to
+*        <=      less than or equal to
+
+
+ `&&' (AND), `||' (OR), and `!' (NOT).  
+
+c， string const is refer to a conct char array；
+Text is usually kept as an array of characters, as we did with line[ ] in the example above  
+The symbol `->' means we're pointing at a member of a structure; `->' is only used in that context.  ptr is a pointer to the (base of) a structure that contains the structure member. 
+ * refer to completely object，->refer to member of struct or union;   and this point, we learn   union is a special struct , every member is the address of union(In effect, a union is a structure in which all members have offset zero from the base, the structure is big enough to hold the "widest" member, and the alignment is appropriate for all of the types in the union. The same operations are permitted on unions as on structures: assignment to or copying as a unit, taking the address, and accessing a member. 
+);
+
+
+C has a goto statement and labels, so you can branch about the way you used to.  But most of the time goto's aren't needed.  (How many have we used up to this point?)  The code can almost always be more clearly expressed by for/while, if/else, and compound statements.
+One use of goto's with some legitimacy is in a program which contains a long loop, where a while(1) would be too extended.  Then you might write
+          mainloop:
+               ...
+               goto mainloop;
+Another use is to implement a break out of more than one level of for or while.  goto's can only branch to labels within the same function.
+
+
+x -= 10;
+uses the assignment operator `-=‘ to decrement x by 10, and
+       x &= 0177
+forms the AND of x and 0177
+
+
+C在它那类语言中的两个最具特征的思想是：数组和指针的关系，声明语法模拟表达式语法
+
+C 另外一个特性：需要关注字符串和数组之间的关系：
+C把串当作在管理上用标记终结的字符数组。  C treats strings as arrays of characters conventionally terminated by a marker 
+   （） cast 运算符 ，必须使用括号的原因是c申明模仿是的表达式求值，所以不加括号 分不清是表达式还是声明；
+     every statement ends with a semicolon；
+     Syntactically, Pascal is much more ALGOL-like than C. English keywords are retained where C uses punctuation symbols – Pascal has and, or, and mod where C uses &&, ||, and % for example. However, C is actually more ALGOL-like than Pascal regarding (simple) declarations, retaining the type-name variable-name syntax. 
+
+__attribute__ is not part of C, but is an extension in GCC that is used to convey special information to the compiler. 
+
+Pascal programming language provides a data structure called the array, which can store a fixed-size sequential collection of elements of the same type
+
+正确的赋值应该是使用 :=, equal to 使用=；
+指针声明应该使用-> 而不是*；
+
+Many people had observed that the problem with C's declarator syntax was that the declarator operator * ("pointer to") is prefix, whereas the declarator operators [] ("array of") and () ("function return- ing") are postfix. This 
+
+c declaration mimic use（expression）；
+
+Similarly, I considered the possibility of introducing a linear notation for declarators. The C trick of having the declaration of a name mimic its use leads to declarations that are hard to read and write, and maximizes the opportunity for humans and pro- grams to confuse declarations and expressions. Many people had observed that the problem with C's declarator syntax was that the declarator operator * ("pointer to") is prefix, whereas the declarator operators [] ("array of") and () ("function return- ing") are postfix. This forces people to use parentheses to disambiguate cases such as: 
+/* C style: */ int* v[10]; /* array of pointers to ints */ int (*p) [10]; /* pointer to array of ints */ 
+Together with Doug McIlroy, Andrew Koenig, Jonathan Shopiro, and others I consid- ered introducing postfix "pointer to" operator -> as an alternative to the prefix *: 
+// radical alternative: v: [10]->int ; // array of pointers to ints 
+p: ->[10]int; 
+int v[10]->; int p->[10]; 
+// pointer to array of ints 
+// less radical alternative: // array of pointers to ints 
+// pointer to array of ints 
+The less radical alternative has the advantage of allowing the postfix -> declarator to coexist with the prefix * declarator during a transition period. After a transition period the * declarator and the redundant parentheses could have been removed from the language. A noticeable benefit of this scheme is that parentheses are only needed to express "function" so that an opportunity for confusion and grammar subtleties could be removed (see also [Sethi, 1981]). Having all declarator operators postfix would ensure that declarations can be read from left to right.  Forexample: 
+int f(char)->[10]->(double)->; 
+meaning a function f returning a pointer to an array of pointers to functions returning a pointer to i n t . Try to write that in straight C/C++! Unfortunately, I fumbled the idea and didn't ever deliver a complete implementation. Instead, people build up complicated types incrementally using typedef: 
+typedef int* DtoI(double); // function taking a double and // returning a pointer to int 
+typedef DtoI* V10[10]; // array of 10 pointers to Dtol V10* f(char); // f takes a char and returns 
+// a pointer to V10 
+My eventual rationale for leaving things as they were was that any new syntax would (temporarily at least) add complexity to a known mess. Also, even though the old style is a boon to teachers of trivia and to people who want to ridicule C, it is not a significant problem for C programmers. In this case, I'm not sure if I did the right thing, though. The agony to me and other C++ implementers, documenters, and tool builders caused by the perversities of syntax has been significant. Users can - and do - of course insulate themselves from such problems by writing in a small and easily understood subset of the C/C++ declaration syntax (§7.2). 
+
+Typedef: Alternative name for a type
