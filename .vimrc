@@ -192,6 +192,8 @@ set cursorline
 noremap m %
 cnoremap <c-a> <Home>
 cnoremap <c-e> <End>
+noremap <c-a> ^
+noremap <c-e> $
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 nnoremap <silent> <backspace> :nohl<cr>
 noremap Y y$
