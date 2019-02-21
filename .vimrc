@@ -28,6 +28,7 @@ Plug 'junegunn/fzf.vim'
 Plug 'Shougo/echodoc.vim'
 Plug 'scrooloose/nerdtree'
 Plug 'majutsushi/tagbar'
+Plug 'rightson/vim-p4-syntax'
 call plug#end()
 
 " 设置 tagbar 子窗口的位置出现在主编辑区的左边
@@ -189,8 +190,8 @@ filetype plugin on
 set cursorline
 "hi MatchParen ctermbg=NONE
 noremap m %
-map <c-a> <Home>
-map <c-e> <End>
+cnoremap <c-a> <Home>
+cnoremap <c-e> <End>
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 nnoremap <silent> <backspace> :nohl<cr>
 noremap Y y$
