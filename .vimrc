@@ -190,10 +190,14 @@ filetype plugin on
 set cursorline
 "hi MatchParen ctermbg=NONE
 noremap m %
+
 cnoremap <c-a> <Home>
 cnoremap <c-e> <End>
+cnoremap <Esc>f <S-Right>
+cnoremap <Esc>b <S-Left>
+
 noremap <c-a> ^
-noremap <c-e> $
+noremap <c-e> g_
 autocmd BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g`\"" | endif
 nnoremap <silent> <backspace> :nohl<cr>
 noremap Y y$
