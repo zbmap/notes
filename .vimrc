@@ -208,9 +208,6 @@ autocmd! bufwritepost .vimrc source %
 vnoremap * y/<C-r>0<CR>
 vnoremap # y?<C-r>0<CR>
 
-noremap lb ^
-noremap le $
-
 noremap * *zz
 noremap # #zz
 noremap <c-o> <c-o>zz
