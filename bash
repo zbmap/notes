@@ -9,23 +9,16 @@ Bash 本质上和c的macro很像，只是扩展方式不太一样，但是本质
 Quoting:		How to remove the special meaning from characters.
 Shell里面说的引用就是改变一个字符表达的含义；一个字符的含义可以是自己字面的意思也可以是一个metachar；
 
-
 Io重定向使用： pipeline 方式； 文件方式，here doc 和here string 方式；或者是任意文件描述符的方式；
 
 bash 命令list：总共有4个， && || & ；
 A list is a sequence of one or more pipelines separated by one of the operators ‘;’, ‘&’, ‘&&’, or ‘||’, and optionally terminated by one of ‘;’, ‘&’, or a newline.
 Bash 脚本参数或者是函数参数都是通过整数或者是* #命名的，只不过我们通过引用的时候都需要使用 $1等方式使用；
 
-
-
 sudo ip route add default nexthop via 192.168.100.4 dev eth1 nexthop via 192.168.100.3 dev eth2
-
-
 
 Renaming/moving files with suffixes quickly: cp /home/foo/realllylongname.cpp{,-old}
 This expands to: cp /home/foo/realllylongname.cpp /home/foo/realllylongname.cpp-old
-
-
 
 !!
 Repeats your last command. Most useful in the form:
@@ -34,13 +27,11 @@ sudo !!
 搜索一个进程命令 用pgrep：通过进程名字获取进程id； 
 不用ps aux  | grep xxx | awk ‘{print $1}’
 
-
 {start..end}   `seq start end`效果是相同的
+
 eval takes a string as its argument, and evaluates it as if you'd typed that string on a command line. 
 
 git clone https://git.openwrt.org/12.09/openwrt.git 1209
-
-
 
 控制结构单条语句写法：
 repeat() { while true; do $@ && return; done } 
@@ -48,13 +39,10 @@ repeat() { while :; do $@ && return; done }
 
 if [[ $UID -eq 0 ]]; then echo "root"; else echo common; fi
 
-
 查看IFS当前的值 
 set | grep ^IFS
 
-
 当通过echo命令给一个文件写入值的时候 如果没有权限，可以通过 echo 0 | sudo tee tmp.a  命令实现给tmp.a 文件写入值
-
 或者通过cat命令写入复杂的值：cat <<qqq | sudo tee tmp.a
 > 1
 > qqq
@@ -63,12 +51,10 @@ Uniq 只能作用于已经排序过的文本；
 
 spawn expect  send example
 #!/bin/expect -f
-
 spawn scp -r zhangbo12@172.18.178.180:/Users/zhangbo12/Downloads/bf-sde-8.5.0.tar .
 expect "Password:"
 send "linux@123\r"
 interact
-
 
 cat heredoc example:
 hostapd_setup_vif() {
@@ -173,6 +159,284 @@ dd if=/dev/zero of=junk.data bs=1M count=1
 
 Touch 命令： 创建文件或者改变文件的时间戳
 
+[ -e /etc/config/network ] && {
+        # only try to parse network config on openwrt
+
+        find_ifname() {(
+                reset_cb
+                include /lib/network
+                scan_interfaces
+                config_get "$1" ifname
+        )}
+} || {
+        find_ifname() {
+                echo "Interface not found."
+                exit 1
+        }
+}
+
+&是put 进程作为后台进程运行； （） 只是作为subshell 进程运行；但是不加&的时候father 是一致等待sub运行的，即block住father；
+local found=0
+local ifc
+for ifc in $interfaces; do
+        local up
+        config_get_bool up "$ifc" up 0
+
+        local auto
+        config_get_bool auto "$ifc" auto 1
+
+        local proto
+        config_get proto "$ifc" proto
+
+        if [ "$DSL_INTERFACE_STATUS" = "UP" ]; then
+                if [ "$proto" = "pppoa" ] && [ "$up" != 1 ] && [ "$auto" = 1 ]; then
+                        found=1
+                        ( sleep 1; ifup "$ifc" ) &
+                fi
+        else
+                if [ "$proto" = "pppoa" ] && [ "$up" = 1 ] && [ "$auto" = 1 ]; then
+                        found=1
+                        ( sleep 1; ifdown "$ifc" ) &
+                fi
+        fi
+done
+
+md5s() {
+        cat "$@" | (
+                md5sum 2>/dev/null ||
+                md5
+        ) | awk '{print $1}'
+}
+
+grep -q "$found_device" /proc/swaps || grep -q "$found_device" /proc/mounts || {
+                                        [ "$enabled" -eq 1 ] && mkdir -p "$target" && mount "$target" 2>&1 | tee /proc/self/fd/2 | logger -t 'fstab'
+}
+
+fopivot() { # <rw_root> <ro_root> <dupe?>
+        root=$1
+        {
+                if grep -q overlay /proc/filesystems; then
+                        mount -t overlayfs -olowerdir=/,upperdir=$1 "overlayfs:$1" /mnt && root=/mnt
+                elif grep -q mini_fo /proc/filesystems; then
+                        mount -t mini_fo -o base=/,sto=$1 "mini_fo:$1" /mnt 2>&- && root=/mnt
+                else
+                        mount --bind / /mnt
+                        mount --bind -o union "$1" /mnt && root=/mnt
+                fi
+        } || {
+                [ "$3" = "1" ] && {
+                mount | grep "on $1 type" 2>&- 1>&- || mount -o bind $1 $1
+                dupe $1 $rom
+                }
+        }
+        pivot $root $2
+}
+
+dupe() { # <new_root> <old_root>
+        cd $1
+        echo -n "creating directories... "
+        {
+                cd $2
+                find . -xdev -type d
+                echo "./dev ./overlay ./mnt ./proc ./tmp"
+                # xdev skips mounted directories
+                cd $1
+        } | xargs mkdir -p
+        echo "done"
+
+        echo -n "setting up symlinks... "
+        for file in $(cd $2; find . -xdev -type f;); do
+                case "$file" in
+                ./rom/note) ;; #nothing
+                ./etc/config*|\
+                ./usr/lib/opkg/info/*) cp -af $2/$file $file;;
+                *) ln -sf /rom/${file#./*} $file;;
+                esac
+        done
+        for file in $(cd $2; find . -xdev -type l;); do
+                cp -af $2/${file#./*} $file
+        done
+        echo "done"
+}
+
+local root_blocks=$((0x$(dd if="$1" bs=2 skip=5 count=4 2>/dev/null) / $CI_BLKSZ))
+
+没有返回值的函数或者是groupcommand ，等效于在最后一个语句后面省略了  return $?
+
+Heredoc 压缩leader tab 进行方便些代码的时候整齐；
+test_softfloat() {
+        cat <<-EOT | "$CC" $CFLAGS -msoft-float -o /dev/null -x c - 2>/dev/null
+                int main(int argc, char **argv)
+                {
+                        double a = 0.1;
+                        double b = 0.2;
+                        double c = (a + b) / (a * b);
+                        return 1;
+                }
+        EOT
+}
+
+platform_find_partitions() {
+        local first dev size erasesize name
+        while read dev size erasesize name; do
+                name=${name#'"'}; name=${name%'"'}
+                case "$name" in
+                        vmlinux.bin.l7|vmlinux|kernel|linux|linux.bin|rootfs|filesystem)
+                                if [ -z "$first" ]; then
+                                        first="$name"
+                                else
+                                        echo "$erasesize:$first:$name"
+                                        break
+                                fi
+                        ;;
+                esac
+        done < /proc/mtd
+}
+下面有本质的区别，上面的是重定向真个while 语句，下面是重定向 while 条件的语句，所以下面的每次while 执行一次，就会重新打开关闭一次文件；进入一个死循环，但是上面就不会，在while 开始的时候打开一次，while 结束close文件；
+while read line < /proc/net/hostap/${phy}/wds; do
+                set $line
+                [ -f "/var/run/wifi-${1}.pid" ] &&
+                        kill "$(cat "/var/run/wifi-${1}.pid")"
+                ifconfig "$1" down
+                unbridge "$1"
+                iwpriv "$phy" wds_del "$2"
+done
+
+for bindir in $(
+                        echo "${sysroot:-$TOOLCHAIN}/bin";
+                        echo "${sysroot:-$TOOLCHAIN}/usr/bin";
+                        echo "${sysroot:-$TOOLCHAIN}/usr/local/bin";
+                        "$CPP" $CFLAGS -v -x c /dev/null 2>&1 | \
+                                sed -ne 's#:# #g; s#^COMPILER_PATH=##p'
+                ); do
+                        if [ -d "$bindir" ]; then
+                                bindirs="$bindirs $(cd "$bindir"; pwd)/"
+                        fi
+done
+
+while [ $((++try)) -le $max ]; do
+	( exec wget -qO/dev/null "$url" 2>/dev/null ) &
+	local pid=$!
+	( sleep 5; kill $pid 2>/dev/null ) &
+	wait $pid && break
+done
+
+set_state() { :; }
+
+find_config() {
+        local device="$1"
+        local ifdev ifl3dev ifobj
+        for ifobj in `ubus list network.interface.\*`; do
+                interface="${ifobj##network.interface.}"
+                (
+                        json_load "$(ifstatus $interface)"
+                        json_get_var ifdev device
+                        json_get_var ifl3dev l3_device
+                        if [[ "$device" = "$ifdev" ]] || [[ "$device" = "$ifl3dev" ]]; then
+                                echo "$interface"
+                                exit 0
+                        else
+                                exit 1
+                        fi
+                ) && return
+        done
+}
+
+try_git() {
+        [ -d .git ] || return 1
+        REV="$(git log | grep -m 1 git-svn-id | awk '{ gsub(/.*@/, "", $0); print $1 }')"
+        REV="${REV:+r$REV}"
+        [ -n "$REV" ]
+}
+
+bash 续行
+do_led() {
+        local name
+        local sysfs
+        config_get name $1 name
+        config_get sysfs $1 sysfs
+        [ "$name" == "$NAME" -o "$sysfs" = "$NAME" -a -e "/sys/class/leds/${sysfs}" ] && {
+                [ "$ACTION" == "set" ] &&
+                        echo 1 >/sys/class/leds/${sysfs}/brightness \
+                        || echo 0 >/sys/class/leds/${sysfs}/brightness
+                exit 0
+        }
+}
+
+#!/bin/sh
+awk -f - $* <<EOF
+function bitcount(c) {
+        c=and(rshift(c, 1),0x55555555)+and(c,0x55555555)
+        c=and(rshift(c, 2),0x33333333)+and(c,0x33333333)
+        c=and(rshift(c, 4),0x0f0f0f0f)+and(c,0x0f0f0f0f)
+        c=and(rshift(c, 8),0x00ff00ff)+and(c,0x00ff00ff)
+        c=and(rshift(c,16),0x0000ffff)+and(c,0x0000ffff)
+        return c
+}
+
+function ip2int(ip) {
+        for (ret=0,n=split(ip,a,"\."),x=1;x<=n;x++) ret=or(lshift(ret,8),a[x])
+        return ret
+}
+
+function int2ip(ip,ret,x) {
+        ret=and(ip,255)
+        ip=rshift(ip,8)
+        for(;x<3;ret=and(ip,255)"."ret,ip=rshift(ip,8),x++);
+        return ret
+}
+
+BEGIN {
+        slpos=index(ARGV[1],"/")
+        if (slpos == 0) {
+                ipaddr=ip2int(ARGV[1])
+                netmask=ip2int(ARGV[2])
+        } else {
+                ipaddr=ip2int(substr(ARGV[1],0,slpos-1))
+                netmask=compl(2**(32-int(substr(ARGV[1],slpos+1)))-1)
+                ARGV[4]=ARGV[3]
+                ARGV[3]=ARGV[2]
+        }
+
+        network=and(ipaddr,netmask)
+        broadcast=or(network,compl(netmask))
+
+        start=or(network,and(ip2int(ARGV[3]),compl(netmask)))
+        limit=network+1
+        if (start<limit) start=limit
+
+        end=start+ARGV[4]
+        limit=or(network,compl(netmask))-1
+        if (end>limit) end=limit
+
+        print "IP="int2ip(ipaddr)
+        print "NETMASK="int2ip(netmask)
+        print "BROADCAST="int2ip(broadcast)
+        print "NETWORK="int2ip(network)
+        print "PREFIX="32-bitcount(compl(netmask))
+
+        # range calculations:
+        # ipcalc <ip> <netmask> <start> <num>
+
+        if (ARGC > 3) {
+                print "START="int2ip(start)
+                print "END="int2ip(end)
+        }
+}
+EOF
+
+#!/usr/bin/env bash
+# Copyright (C) 2006-2010 OpenWrt.org
+. ./gen_image_generic.sh
+
+which chpax >/dev/null && chpax -zp $(which grub)
+grub --batch --no-curses --no-floppy --device-map=/dev/null <<EOF
+device (hd0) $OUTPUT
+geometry (hd0) $cyl $head $sect
+root (hd0,0)
+setup (hd0)
+quit
+EOF
 
 补丁相关命令   
 生成patch：diff -Naru tmp tmp.a >tmp.patch
@@ -196,7 +460,87 @@ $MNAT_CMD  2>&1 &
 Eval  命令 相当于上面的先赋值cmd，然后再执行cmd 命令；
 Bash 检索命令优先级：builtin  函数，然后才是path路径查找； 如果想执行指定path里面的一个命令，可以通过给定一个完整的路径的方式进行执行；
 
+More precisely, a double dash (--) is used in bash built-in commands and many other commands to signify the end of command options, after which only positional parameters are accepted.
+Example use: lets say you want to grep a file for the string -v - normally -v will be considered the option to reverse the matching meaning (only show lines that do not match), but with -- you can grep for string -v like this:
+grep -- -v file
 
+
+Bash 里面参数扩展的void 即丢弃扩展后的值；: $((kilobytes++))    
+
+if cmp expected actual >/dev/null 2>/dev/null  ：可以同时做重定向
+
+
+Dpdk 里面通过doble dash 来区分系统参数是否已经结束；
+
+
+cat /proc/cpuinfo  | { grep process;  echo abc; } 
+只有grep 采用这个stdin， 所以abc最后才会被打印出来一次
+
+
+Grep 里面通过-e 达到or的目的：mnatadm stats-list  | grep -e up -e down 检索 文本中有 up 或者down的词；
+
+
+下面例子说明可以通过定义变量的方式来简化表达式的使用；
+temp="/tmp/fix_ws.$$.$RANDOM"
+
+# Using $'xxx' bashism
+begin8sp_tab=$'s/^        /\t/'
+beginchar7sp_chartab=$'s/^\\([^ \t]\\)       /\\1\t/'
+tab8sp_tabtab=$'s/\t        /\t\t/g'
+tab8sptab_tabtabtab=$'s/\t        \t/\t\t\t/g'
+begin17sptab_tab=$'s/^ \\{1,7\\}\t/\t/'
+tab17sptab_tabtab=$'s/\t \\{1,7\\}\t/\t\t/g'
+trailingws_=$'s/[ \t]*$//'
+
+#>fix_ws.diff
+
+find "$@" -type f \
+| while read name; do
+    test "YES" = "${name/*.bz2/YES}" && continue
+    test "YES" = "${name/*.gz/YES}" && continue
+    test "YES" = "${name/*.png/YES}" && continue
+    test "YES" = "${name/*.gif/YES}" && continue
+    test "YES" = "${name/*.jpg/YES}" && continue
+    test "YES" = "${name/*.diff/YES}" && continue
+    test "YES" = "${name/*.patch/YES}" && continue
+    # shell testsuite entries are not to be touched too
+    test "YES" = "${name/*.right/YES}" && continue
+
+    if test "YES" = "${name/*.[chsS]/YES}" \
+        -o "YES" = "${name/*.sh/YES}" \
+        -o "YES" = "${name/*.txt/YES}" \
+        -o "YES" = "${name/*.html/YES}" \
+        -o "YES" = "${name/*.htm/YES}" \
+        -o "YES" = "${name/*Config.in*/YES}" \
+    ; then
+    # More aggressive whitespace fixes for known file types
+        echo "Formatting: $name" >&2
+        cat "$name" \
+        | sed -e "$tab8sptab_tabtabtab" -e "$tab8sptab_tabtabtab" \
+              -e "$tab8sptab_tabtabtab" -e "$tab8sptab_tabtabtab" \
+        | sed "$begin17sptab_tab" \
+        | sed -e "$tab17sptab_tabtab" -e "$tab17sptab_tabtab" \
+              -e "$tab17sptab_tabtab" -e "$tab17sptab_tabtab" \
+              -e "$tab17sptab_tabtab" -e "$tab17sptab_tabtab" \
+        | sed "$trailingws_"
+    elif test "YES" = "${name/*Makefile*/YES}" \
+        -o "YES" = "${name/*Kbuild*/YES}" \
+    ; then
+    # For Makefiles, never convert "1-7spaces+tab" into "tabtab"
+        echo "Makefile: $name" >&2
+        cat "$name" \
+        | sed -e "$tab8sptab_tabtabtab" -e "$tab8sptab_tabtabtab" \
+              -e "$tab8sptab_tabtabtab" -e "$tab8sptab_tabtabtab" \
+        | sed -e "$tab17sptab_tabtab" -e "$tab17sptab_tabtab" \
+              -e "$tab17sptab_tabtab" -e "$tab17sptab_tabtab" \
+              -e "$tab17sptab_tabtab" -e "$tab17sptab_tabtab" \
+        | sed "$trailingws_"
+    else
+    # Only remove trailing WS for the rest
+        echo "Removing trailing whitespace: $name" >&2
+        cat "$name" \
+        | sed "$trailingws_"
+    fi >"$temp"
 
 
 A function to print out error messages along with other status information is recommended.
