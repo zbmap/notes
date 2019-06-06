@@ -152,6 +152,7 @@ let NERDCompactSexyComs=1
 
 set cc=81
 set nu
+nnoremap <Leader>l :set nonumber!<CR>
 set noswapfile
 set background=dark
 colorschem solarized
